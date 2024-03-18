@@ -1,0 +1,21 @@
+.app {
+  width: 100dvw;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: 5fr 2fr;
+}
+
+.app__top,
+.app__bottom {
+  display: grid;
+  overflow: hidden;
+}
+
+.app__top {
+  grid-template-columns: 2fr minmax(20%, 60%) 2fr;
+}
+
+.app__bottom {
+  grid-template-columns: 2fr minmax(20%, 60%) 2fr;
+  grid-template-areas: "timeline timeline audio_mixer";
+}

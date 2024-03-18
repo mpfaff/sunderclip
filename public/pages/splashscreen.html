@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Sunderclip</title>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      @font-face {
+        font-family: "Inter";
+        src: url("/fonts/Inter.ttf");
+        font-variation-settings: "slnt" -7;
+      }
+
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      * {
+        font-family: "Inter", Avenir, Helvetica, Arial, sans-serif;
+      }
+
+      :root {
+        font-size: 16px;
+
+        --clr-neutral-900: 220, 14%, 12%;
+        --clr-neutral-800: 220, 14%, 20%;
+        --clr-neutral-700: 220, 14%, 30%;
+        --clr-neutral-600: 220, 14%, 40%;
+        --clr-neutral-500: 220, 14%, 50%;
+        --clr-neutral-400: 220, 14%, 60%;
+        --clr-neutral-300: 220, 14%, 70%;
+        --clr-neutral-200: 220, 14%, 80%;
+        --clr-neutral-100: 220, 14%, 95%;
+
+        --clr-primary-100: 221, 95%, 10%;
+        --clr-primary-200: 221, 95%, 20%;
+        --clr-primary-300: 221, 95%, 30%;
+        --clr-primary-400: 221, 95%, 40%;
+        --clr-primary-500: 221, 95%, 50%;
+        --clr-primary-600: 221, 95%, 60%;
+        --clr-primary-700: 221, 95%, 70%;
+        --clr-primary-800: 221, 95%, 80%;
+        --clr-primary-900: 221, 95%, 90%;
+
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      html {
+        scrollbar-color: dark;
+        height: 100%;
+      }
+
+      body {
+        font-size: 1rem;
+        color: hsl(var(--clr-neutral-900));
+        background-image: radial-gradient(circle at top left, hsl(var(--clr-neutral-200)) 0%, hsl(var(--clr-neutral-200)) 30%, hsl(var(--clr-neutral-100)) 70%);
+        height: 100%;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      .splashscreen {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 0.5em;
+        text-align: center;
+        text-shadow: 0 0 1.25rem rgba(0, 0, 0, 0.5);
+      }
+
+      .splashscreen__title {
+        font-size: 2.5rem;
+        margin-bottom: 0.15em;
+      }
+
+      .splashscreen__text {
+        color: hsl(var(--clr-neutral-700));
+      }
+
+      .splashscreen__loader {
+        margin-top: 1.75em;
+      }
+
+      .splashscreen__loader-img {
+        background-color: hsl(var(--clr-neutral-900));
+        -webkit-mask: url("/images/loading.svg") no-repeat center;
+        mask: url("/images/loading.svg") no-repeat center;
+        width: 4rem;
+        height: 4rem;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --clr-neutral-100: 220, 14%, 12%;
+          --clr-neutral-200: 220, 14%, 20%;
+          --clr-neutral-300: 220, 14%, 30%;
+          --clr-neutral-400: 220, 14%, 40%;
+          --clr-neutral-500: 220, 14%, 50%;
+          --clr-neutral-600: 220, 14%, 60%;
+          --clr-neutral-700: 220, 14%, 70%;
+          --clr-neutral-800: 220, 14%, 80%;
+          --clr-neutral-900: 220, 14%, 95%;
+        }
+
+        html {
+          scrollbar-color: dark;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="splashscreen">
+      <h1 class="splashscreen__title">Sunderclip</h1>
+      <p class="splashscreen__text">By: Emperor of Bluegaria</p>
+      <div class="splashscreen__loader">
+        <div role="img" class="splashscreen__loader-img"></div>
+      </div>
+    </div>
+  </body>
+</html>

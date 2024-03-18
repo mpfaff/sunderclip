@@ -1,0 +1,12 @@
+.heading {
+  font-weight: 500;
+  color: hsl(var(--clr-neutral-800));
+  text-align: center;
+  font-size: 1.25rem;
+}
+
+.content_fallback {
+  text-align: center;
+  color: hsl(var(--clr-neutral-700));
+  margin: auto;
+}

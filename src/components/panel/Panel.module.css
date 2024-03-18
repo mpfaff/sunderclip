@@ -1,0 +1,17 @@
+.panel {
+  width: 100%;
+  border: 1px solid hsl(var(--clr-neutral-200));
+  display: flex;
+  flex-grow: 1;
+  padding: 0.5em;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.panelRow {
+  flex-direction: row;
+}
+
+.panelColumn {
+  flex-direction: column;
+}

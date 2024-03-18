@@ -1,0 +1,122 @@
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter.ttf");
+  font-variation-settings: "slnt" -7;
+}
+
+@font-face {
+  font-family: "Chivo";
+  src: url("/fonts/ChivoMono.ttf");
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-size: 16px;
+
+  --clr-neutral-100: 220, 14%, 12%;
+  --clr-neutral-200: 220, 14%, 20%;
+  --clr-neutral-300: 220, 14%, 30%;
+  --clr-neutral-400: 220, 14%, 40%;
+  --clr-neutral-500: 220, 14%, 50%;
+  --clr-neutral-600: 220, 14%, 60%;
+  --clr-neutral-700: 220, 14%, 70%;
+  --clr-neutral-800: 220, 14%, 80%;
+  --clr-neutral-900: 220, 14%, 95%;
+
+  --clr-primary-100: 221, 95%, 10%;
+  --clr-primary-200: 221, 95%, 20%;
+  --clr-primary-300: 221, 95%, 30%;
+  --clr-primary-400: 221, 95%, 40%;
+  --clr-primary-500: 221, 95%, 50%;
+  --clr-primary-600: 221, 95%, 60%;
+  --clr-primary-700: 221, 95%, 70%;
+  --clr-primary-800: 221, 95%, 80%;
+  --clr-primary-900: 221, 95%, 90%;
+
+  --layer-overlay: 9;
+
+  --font-primary: "Inter", Avenir, Helvetica, Arial, sans-serif;
+  --font-monospace: "Chivo", monospace;
+
+  font-synthesis: none;
+  /* text-rendering: optimizeLegibility; */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  font-family: var(--font-primary);
+}
+
+html {
+  scrollbar-color: dark;
+}
+
+body {
+  font-size: 1rem;
+  color: hsl(var(--clr-neutral-900));
+  background-color: hsl(var(--clr-neutral-100));
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  margin-bottom: 0.5em;
+}
+
+button {
+  padding: 0.5em 0.8em;
+  font-size: 1rem;
+  color: hsl(var(--clr-neutral-900));
+  background-color: hsl(var(--clr-primary-400));
+  border: none;
+  border-radius: 0.25em;
+}
+
+button:hover {
+  cursor: pointer;
+  background-color: hsl(var(--clr-primary-500));
+}
+
+input:focus-visible,
+button:focus-visible {
+  outline: 2px solid hsl(var(--clr-primary-800));
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --clr-neutral-900: 220, 14%, 12%;
+    --clr-neutral-800: 220, 14%, 20%;
+    --clr-neutral-700: 220, 14%, 30%;
+    --clr-neutral-600: 220, 14%, 40%;
+    --clr-neutral-500: 220, 14%, 50%;
+    --clr-neutral-400: 220, 14%, 60%;
+    --clr-neutral-300: 220, 14%, 70%;
+    --clr-neutral-200: 220, 14%, 80%;
+    --clr-neutral-100: 220, 14%, 95%;
+
+    --clr-primary-900: 221, 95%, 10%;
+    --clr-primary-800: 221, 95%, 20%;
+    --clr-primary-700: 221, 95%, 30%;
+    --clr-primary-600: 221, 95%, 40%;
+    --clr-primary-500: 221, 95%, 50%;
+    --clr-primary-400: 221, 95%, 60%;
+    --clr-primary-300: 221, 95%, 70%;
+    --clr-primary-200: 221, 95%, 80%;
+    --clr-primary-100: 221, 95%, 90%;
+  }
+
+  html {
+    scrollbar-color: light;
+  }
+}

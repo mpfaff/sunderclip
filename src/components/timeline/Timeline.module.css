@@ -1,0 +1,54 @@
+.timeline {
+  grid-area: timeline;
+  display: grid;
+  grid-template-columns: subgrid;
+  padding: 0;
+}
+
+.timeline__info {
+  padding: 0.5em;
+  border-right: 1px solid hsl(var(--clr-neutral-200));
+}
+
+.timeline__timecode {
+  font-size: 2rem;
+  font-weight: 350;
+  color: hsl(var(--clr-primary-900));
+  text-align: right;
+  font-family: var(--font-monospace);
+}
+
+.timeline__controls {
+  border-left: 1px solid hsl(var(--clr-neutral-200));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.5em 1em;
+}
+
+.timeline__container {
+  width: 100%;
+  position: relative;
+
+  --cursor-width: 32px;
+}
+
+.timeline__bar {
+  width: calc(100% - var(--cursor-width));
+  height: 1.5em;
+  background-color: hsl(var(--clr-neutral-200));
+  margin: 0 auto;
+}
+
+.timeline__cursor {
+  width: var(--cursor-width);
+  height: 32px;
+  background-color: hsl(var(--clr-primary-600));
+  top: 0;
+  transform: translateY(-100%) translateX(var(--translateX));
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+  position: absolute;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}

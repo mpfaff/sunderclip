@@ -1,0 +1,27 @@
+.media_info {
+  display: flex;
+  flex-direction: column;
+}
+
+.media_info__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5em;
+  border-top: 1px solid hsl(var(--clr-neutral-200));
+  padding: 0.5em;
+}
+
+.media_info__item:nth-child(odd) {
+  background-color: hsl(var(--clr-neutral-200), 0.1);
+}
+
+.media_info__text {
+  color: hsl(var(--clr-neutral-800));
+  font-size: 0.9rem;
+}
+
+.media_info__text:last-child {
+  color: hsl(var(--clr-neutral-900));
+  word-break: break-all;
+  overflow-wrap: break-word;
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Sunderclip</title>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+
+    <!-- <link rel="icon" type="image/svg+xml" href="/src/assets/logo.svg" /> -->
+
+    <script src="/src/index.tsx" defer type="module"></script>
+
+    <script>
+      if (window.location.hostname === "tauri.localhost") {
+        document.addEventListener(
+          "contextmenu",
+          (event) => {
+            event.preventDefault();
+            return false;
+          },
+          { capture: true }
+        );
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "F5" || (event.ctrlKey && event.key === "r") || (event.metaKey && event.key === "r")) {
+            event.preventDefault();
+          }
+        });
+      }
+    </script>
+  </head>
+
+  <body id="root">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+  </body>
+</html>
