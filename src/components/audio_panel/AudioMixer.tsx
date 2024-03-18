@@ -1,23 +1,16 @@
-import { Accessor, For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import { For, Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import Panel from "../panel/Panel";
 
 import styles from "./AudioMixer.module.css";
 import panelStyles from "../panel/PanelCommon.module.css";
-import { MediaData, PlayerData } from "../../../types";
+import { useAppContext } from "../../contexts/AppContext";
+import { usePlayerContext } from "../../contexts/PlayerContext";
 
-export default function AudioMixer({
-  videoElement,
-  mediaData,
-  playerData,
-  file,
-}: {
-  videoElement: Accessor<HTMLVideoElement | undefined>;
-  mediaData: Accessor<MediaData | null>;
-  playerData: Accessor<PlayerData>;
-  file: Accessor<string | null>;
-}) {
+export default function AudioMixer() {
+  const [{ videoElement, videoFile, mediaData }] = useAppContext();
+  const [{ playing }] = usePlayerContext();
+
   const [audioMeters, setAudioMeters] = createSignal<number[]>([]);
-  const playing = createMemo(() => playerData().playing);
   const [computers, setComputers] = createSignal<Set<() => number>>(new Set());
   const [sources, setSources] = createSignal<Set<MediaElementAudioSourceNode>>(new Set());
   const [audioContext] = createSignal(new AudioContext());
@@ -75,7 +68,7 @@ export default function AudioMixer({
     <Panel class={styles.audio_mixer} column>
       <h2 class={panelStyles.heading}>Audio Mixer</h2>
       <ol class={styles.audio_mixer__streams}>
-        <Show when={mediaData() != null} fallback={<p class={panelStyles.content_fallback}>{file() != null ? "Loading..." : "No video selected"}</p>}>
+        <Show when={mediaData() != null} fallback={<p class={panelStyles.content_fallback}>{videoFile() != null ? "Loading..." : "No video selected"}</p>}>
           <For each={mediaData()?.streams?.filter((stream) => stream.codec_type === "audio") || []}>
             {(stream, i) => (
               <li class={styles.audio_mixer__stream}>

@@ -2,15 +2,18 @@ import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
 
 import Overlay from "../overlay/Overlay";
 import styles from "./Welcome.module.css";
-import { Setter, Show, createSignal, onCleanup, onMount } from "solid-js";
+import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { open } from "@tauri-apps/plugin-dialog";
+import { useAppContext } from "../../contexts/AppContext";
 
 type FileDropPayload = { paths: string[]; position: { x: number; y: number } };
 
 const VIDEO_FILE_EXTENSIONS = new Set(["mp4", "webm", "ogg"]);
 const VIDEO_FILE_EXT_ARRAY = Array.from(VIDEO_FILE_EXTENSIONS);
 
-export default function Welcome({ setVideoFile }: { setVideoFile: Setter<string> }) {
+export default function Welcome() {
+  const [{ videoFile }, { setVideoFile }] = useAppContext();
+
   const [hovering, setHovering] = createSignal(false);
   const [hoveringValid, setHoveringValid] = createSignal(true);
 
@@ -51,40 +54,42 @@ export default function Welcome({ setVideoFile }: { setVideoFile: Setter<string>
   });
 
   return (
-    <Overlay
-      strength={hovering() && hoveringValid() ? 0.35 : 0.6}
-      class={`${styles.overlay_drop} ${hovering() ? (hoveringValid() ? styles.overlay_dropValid : styles.overlay_dropInvalid) : ""}`}
-    >
-      <Show
-        when={!hovering()}
-        fallback={
-          <p class={styles.overlay__drop_msg}>
-            {hoveringValid() ? "- Drop file -" : `Invalid drop payload. Only one video file of type (.${VIDEO_FILE_EXT_ARRAY.join(", .")}) is allowed.`}
-          </p>
-        }
+    <Show when={videoFile() == null}>
+      <Overlay
+        strength={hovering() && hoveringValid() ? 0.35 : 0.6}
+        class={`${styles.overlay_drop} ${hovering() ? (hoveringValid() ? styles.overlay_dropValid : styles.overlay_dropInvalid) : ""}`}
       >
-        <div class={styles.welcome}>
-          <h1 class={styles.welcome__heading}>Welcome to Sunderclip</h1>
+        <Show
+          when={!hovering()}
+          fallback={
+            <p class={styles.overlay__drop_msg}>
+              {hoveringValid() ? "- Drop file -" : `Invalid drop payload. Only one video file of type (.${VIDEO_FILE_EXT_ARRAY.join(", .")}) is allowed.`}
+            </p>
+          }
+        >
+          <div class={styles.welcome}>
+            <h1 class={styles.welcome__heading}>Welcome to Sunderclip</h1>
 
-          <p class={styles.welcome__text}>To start, drag and drop a video file anywhere on this window</p>
-          <p class={styles.welcome__split}>or</p>
-          <button
-            class={styles.welcome__btn}
-            onClick={async () => {
-              const file = await open({
-                multiple: false,
-                directory: false,
-                filters: [{ name: "Web video files", extensions: VIDEO_FILE_EXT_ARRAY }],
-              });
-              if (file == null) return;
+            <p class={styles.welcome__text}>To start, drag and drop a video file anywhere on this window</p>
+            <p class={styles.welcome__split}>or</p>
+            <button
+              class={styles.welcome__btn}
+              onClick={async () => {
+                const file = await open({
+                  multiple: false,
+                  directory: false,
+                  filters: [{ name: "Web video files", extensions: VIDEO_FILE_EXT_ARRAY }],
+                });
+                if (file == null) return;
 
-              setVideoFile(file.path);
-            }}
-          >
-            Select a file
-          </button>
-        </div>
-      </Show>
-    </Overlay>
+                setVideoFile(file.path);
+              }}
+            >
+              Select a file
+            </button>
+          </div>
+        </Show>
+      </Overlay>
+    </Show>
   );
 }

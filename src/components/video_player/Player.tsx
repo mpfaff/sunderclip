@@ -1,34 +1,24 @@
-import { Accessor, Setter, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { convertFileSrc } from "@tauri-apps/api/core";
 
 import Panel from "../panel/Panel";
 
-import { PlayerData } from "../../../types";
 import styles from "./Player.module.css";
+import { usePlayerContext } from "../../contexts/PlayerContext";
+import { useAppContext } from "../../contexts/AppContext";
 
-export default function Player({
-  videoElement,
-  setVideoElement,
-  data,
-  setPlayerData,
-  file,
-}: {
-  videoElement: Accessor<HTMLVideoElement | undefined>;
-  setVideoElement: Setter<HTMLVideoElement>;
-  data: Accessor<PlayerData>;
-  setPlayerData: Setter<PlayerData>;
-  file: Accessor<string | null>;
-}) {
+export default function Player() {
+  const [{ videoElement, videoFile }, { setVideoElement }] = useAppContext();
+  const [{ playing }, { setCurrentTime, setPlaying }] = usePlayerContext();
+
   function updatePlaying(playing: boolean) {
-    setPlayerData((prev) => ({ ...prev, playing }));
+    setPlaying(playing);
   }
 
   function updateTime() {
     const seconds = videoElement()!.currentTime;
+    setCurrentTime(seconds);
 
-    setPlayerData((prev) => ({ ...prev, currentTime: seconds }));
-
-    if (data().playing) requestAnimationFrame(updateTime);
+    if (playing()) requestAnimationFrame(updateTime);
   }
 
   return (
@@ -36,7 +26,7 @@ export default function Player({
       <div class={styles.player__container}>
         <video
           class={styles.player__video}
-          src={file() != null ? convertFileSrc(file()!) : ""}
+          src={videoFile() != null ? convertFileSrc(videoFile()!) : ""}
           ref={(el) => setVideoElement(el)}
           controls
           onPause={() => updatePlaying(false)}

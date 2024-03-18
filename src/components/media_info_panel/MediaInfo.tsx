@@ -1,4 +1,4 @@
-import { Accessor, Setter, Show, createEffect } from "solid-js";
+import { Show, createEffect } from "solid-js";
 
 import { FfprobeOutput, FfprobeVideoStream, MediaData } from "../../../types";
 import Panel from "../panel/Panel";
@@ -7,6 +7,7 @@ import panelStyles from "../panel/PanelCommon.module.css";
 import styles from "./MediaInfo.module.css";
 import { invoke } from "@tauri-apps/api/core";
 import { gcd, round } from "../../util";
+import { useAppContext } from "../../contexts/AppContext";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
@@ -17,24 +18,18 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   second: "numeric",
 });
 
-export default function MediaInfo({
-  file,
-  mediaData,
-  setMediaData,
-}: {
-  file: Accessor<string | null>;
-  mediaData: Accessor<MediaData | null | undefined>;
-  setMediaData: Setter<MediaData | null>;
-}) {
-  createEffect(async () => {
-    const videoFile = file();
+export default function MediaInfo() {
+  const [{ videoFile, mediaData }, { setMediaData }] = useAppContext();
 
-    if (videoFile == null) return;
+  createEffect(async () => {
+    const file = videoFile();
+
+    if (file == null) return;
 
     setMediaData(null);
 
     const rawData: string = await invoke("ffprobe_cmd", {
-      filepath: videoFile,
+      filepath: file,
     });
 
     try {
@@ -47,7 +42,7 @@ export default function MediaInfo({
       const size = Number(json.format.size);
 
       const data: MediaData = {
-        filename: videoFile,
+        filename: file,
         width: videoStream.width,
         height: videoStream.height,
         videoCodec: videoStream.codec_name,
@@ -71,7 +66,7 @@ export default function MediaInfo({
   return (
     <Panel column>
       <h2 class={panelStyles.heading}>Media Information</h2>
-      <Show when={mediaData() != null} fallback={<p class={panelStyles.content_fallback}>{file() != null ? "Loading..." : "No video selected"}</p>}>
+      <Show when={mediaData() != null} fallback={<p class={panelStyles.content_fallback}>{videoFile() != null ? "Loading..." : "No video selected"}</p>}>
         <ul class={styles.media_info}>
           {(() => {
             const data = mediaData()!;

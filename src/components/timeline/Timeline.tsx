@@ -1,11 +1,15 @@
-import { Accessor, createSignal, onCleanup, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 import Panel from "../panel/Panel";
 
 import styles from "./Timeline.module.css";
-import { MediaData, PlayerData } from "../../../types";
 import { secondsToHMSMs } from "../../util";
+import { useAppContext } from "../../contexts/AppContext";
+import { usePlayerContext } from "../../contexts/PlayerContext";
 
-export default function Timeline({ playerData, mediaData }: { playerData: Accessor<PlayerData>; mediaData: Accessor<MediaData | null> }) {
+export default function Timeline() {
+  const [{ mediaData }] = useAppContext();
+  const [{ currentTime }] = usePlayerContext();
+
   const [dragging, setDragging] = createSignal(false);
   const [cursorPos, setCursorPos] = createSignal(0);
   const [timecodeType, setTimecodeType] = createSignal<"frames" | "time">("frames");
@@ -53,7 +57,7 @@ export default function Timeline({ playerData, mediaData }: { playerData: Access
     <Panel class={styles.timeline}>
       <div class={styles.timeline__info}>
         <p class={styles.timeline__timecode} contenteditable>
-          {secondsToHMSMs(playerData().currentTime, timecodeType() === "frames" ? mediaData()?.fps || 1 : undefined)}
+          {secondsToHMSMs(currentTime(), timecodeType() === "frames" ? mediaData()?.fps || 1 : undefined)}
         </p>
       </div>
       <div class={styles.timeline__controls}>
