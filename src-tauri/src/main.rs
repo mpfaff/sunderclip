@@ -17,10 +17,11 @@ const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/linux/ffmpeg.zst");
 const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/linux/ffprobe.zst");
 
 use std::{
+    error::Error,
     fs::{create_dir, File},
     io::BufWriter,
     path::PathBuf,
-    sync::OnceLock,
+    sync::{Arc, OnceLock},
 };
 
 static FFMPEG_HOME: OnceLock<PathBuf> = OnceLock::new();
@@ -29,8 +30,9 @@ static FFMPEG_PATH: OnceLock<PathBuf> = OnceLock::new();
 static TEMP_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 use tauri::{
+    http::{self, HeaderValue},
     menu::{Menu, MenuEvent, MenuItem, Submenu},
-    App, Manager, Window, Wry,
+    App, AppHandle, Manager, Window, Wry,
 };
 
 mod commands;
@@ -137,7 +139,32 @@ fn handle_menu(window: &Window, event: MenuEvent) {
 }
 
 fn main() {
+    let runtime = Arc::new(
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap(),
+    );
+
     tauri::Builder::default()
+        .register_asynchronous_uri_scheme_protocol("extract-audio", {
+            let runtime = Arc::clone(&runtime);
+            move |_app, req, resp| {
+                runtime.spawn(async move {
+                    let mut res = commands::extract_audio::extract_audio_protocol(req)
+                        .await
+                        .unwrap_or_else(|e| {
+                            http::Response::builder()
+                                .status(400)
+                                .body(Vec::from(e))
+                                .unwrap()
+                        });
+                    res.headers_mut()
+                        .append("Access-Control-Allow-Origin", HeaderValue::from_static("*"));
+                    resp.respond(res)
+                });
+            }
+        })
         .setup(|app| {
             setup(app)?;
 
@@ -154,7 +181,6 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::close_splashscreen::close_splashscreen,
             commands::ffprobe_cmd::ffprobe_cmd,
-            commands::extract_audio::extract_audio,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -165,8 +165,8 @@ export type FfprobeOutput = {
 export type AudioTrack = {
   trackIndex: number;
   muted: boolean;
-  source: MediaElementAudioSourceNode;
-  audio?: HTMLAudioElement;
+  sourceNode: MediaElementAudioSourceNode;
+  sourceElement: HTMLMediaElement;
   getCurrentAmplitude: () => number;
 };
 

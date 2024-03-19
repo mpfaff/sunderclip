@@ -46,7 +46,7 @@ export default function AudioMixer() {
       result.push(audioTrack.getCurrentAmplitude());
 
       if (i > 0) {
-        audioTrack!.audio!.play();
+        audioTrack!.sourceElement!.play();
       }
     }
     setAudioMeters(result);
@@ -57,7 +57,7 @@ export default function AudioMixer() {
       for (let i = 0; i < audioTracks.length; i++) {
         const audioTrack = audioTracks[i];
 
-        if (i > 0) audioTrack!.audio!.pause();
+        if (i > 0) audioTrack.sourceElement.pause();
       }
     }
   }
@@ -67,18 +67,28 @@ export default function AudioMixer() {
   });
 
   createEffect(() => {
+    audioTracks.forEach((stream) => {
+      stream.sourceElement.muted = stream.muted;
+    });
+  });
+
+  createEffect(() => {
     const videoTime = currentTime();
 
     audioTracks.slice(1).forEach((track) => {
-      if (Math.abs(videoTime - track!.audio!.currentTime) > MAX_AUDIO_DIFF) track!.audio!.currentTime = videoTime;
+      if (Math.abs(videoTime - track.sourceElement.currentTime) > MAX_AUDIO_DIFF) track.sourceElement.currentTime = videoTime;
     });
   });
 
   async function requestAudioExtract(videoSource: string, audioTrackIndex: number) {
+    console.log("E");
+
     const response = await invoke<string>("extract_audio", {
       videoSource,
       audioTrackIndex,
     });
+
+    console.log(response);
 
     try {
       const data = JSON.parse(response) as { audio_source: string };
@@ -99,30 +109,23 @@ export default function AudioMixer() {
     (data.streams.filter((stream) => stream.codec_type === "audio") as FfprobeAudioStream[]).forEach(async (stream, i) => {
       if (i === 0) return setAudioTracks(0, "trackIndex", stream.index);
 
-      const extractedSource = await requestAudioExtract(video, stream.index);
-      if (extractedSource == null) return;
-
-      const audio = new Audio(convertFileSrc(extractedSource));
+      const audio = new Audio(`${location.protocol}//extract-audio.${location.hostname}/${encodeURIComponent(video)}/${stream.index}`);
       audio.crossOrigin = "anonymous";
-      // Todo: make audio sync with video
 
       const { computeAmplitude, source } = createAudioAnalyser(audioContext, audio);
 
-      // Slightly bugged as pushes to array on hot reload
       setAudioTracks(i, {
         trackIndex: stream.index,
         muted: false,
         getCurrentAmplitude: computeAmplitude,
-        audio,
-        source,
+        sourceElement: audio,
+        sourceNode: source,
       });
     });
   });
 
   onCleanup(() => {
-    emit("discard-audio-sources", {
-      videoSource: videoFile(),
-    });
+    audioTracks.slice(1).forEach((stream) => URL.revokeObjectURL(stream.sourceElement.src));
   });
 
   return (
@@ -133,14 +136,15 @@ export default function AudioMixer() {
           <For each={audioTracks}>
             {(stream, i) => (
               <li class={styles.audio_mixer__stream}>
-                <span class={styles.audio_mixer__stream_label}>
+                <span class={styles.audio_mixer__stream_label} contentEditable>
                   Track {i() + 1}
-                  <br />
-                  <span class={styles.audio_mixer__stream_internal}>(stream {stream.trackIndex == -1 ? "?" : stream.trackIndex})</span>
                 </span>
+                <span class={styles.audio_mixer__stream_internal}>(stream {stream.trackIndex == -1 ? "?" : stream.trackIndex})</span>
 
                 <div class={styles.audio_mixer__btns}>
-                  <button class={styles.audio_mixer__btn}>Mute</button>
+                  <button class={styles.audio_mixer__btn} onClick={() => setAudioTracks(i(), "muted", !stream.muted)}>
+                    {stream.muted ? "Muted" : "Mute"}
+                  </button>
                 </div>
                 <div class={styles.audio_mixer__visualizer} role="meter" style={`--silence: ${100 - audioMeters()[i()] * 100}%`}></div>
               </li>

@@ -30,7 +30,8 @@ export default function Player() {
       trackIndex: -1,
       muted: false,
       getCurrentAmplitude: computeAmplitude,
-      source,
+      sourceNode: source,
+      sourceElement: videoElement(),
     });
   });
 
@@ -39,6 +40,7 @@ export default function Player() {
       <div class={styles.player__container}>
         <video
           class={styles.player__video}
+          preload="auto"
           src={videoFile() != null ? convertFileSrc(videoFile()!) : ""}
           ref={(ref) => setVideoElement(ref)}
           controls
