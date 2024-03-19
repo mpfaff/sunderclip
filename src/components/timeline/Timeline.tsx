@@ -34,8 +34,6 @@ export default function Timeline() {
 
     const percentage = Math.max(0, Math.min((delta - cursorCenter) / (timelineBarRect.width - cursorWidth), 1));
 
-    console.log(percentage);
-
     setCursorPos(Math.max(0, Math.min(delta, timelineBarRect.width - cursorCenter) - cursorCenter));
   }
 

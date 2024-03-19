@@ -16,12 +16,12 @@
 }
 
 .media_info__text {
-  color: hsl(var(--clr-neutral-800));
+  color: hsl(var(--clr-neutral-700));
   font-size: 0.9rem;
 }
 
 .media_info__text:last-child {
-  color: hsl(var(--clr-neutral-900));
+  color: hsl(var(--clr-neutral-800));
   word-break: break-all;
   overflow-wrap: break-word;
 }

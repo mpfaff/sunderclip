@@ -5,10 +5,12 @@ import Panel from "../panel/Panel";
 import styles from "./Player.module.css";
 import { usePlayerContext } from "../../contexts/PlayerContext";
 import { useAppContext } from "../../contexts/AppContext";
+import { onMount } from "solid-js";
+import { createAudioAnalyser } from "../audio_panel/AudioMixer";
 
 export default function Player() {
   const [{ videoElement, videoFile }, { setVideoElement }] = useAppContext();
-  const [{ playing }, { setCurrentTime, setPlaying }] = usePlayerContext();
+  const [{ playing, audioContext }, { setCurrentTime, setPlaying, setAudioTracks }] = usePlayerContext();
 
   function updatePlaying(playing: boolean) {
     setPlaying(playing);
@@ -21,13 +23,24 @@ export default function Player() {
     if (playing()) requestAnimationFrame(updateTime);
   }
 
+  onMount(() => {
+    const { computeAmplitude, source } = createAudioAnalyser(audioContext, videoElement()!);
+
+    setAudioTracks(0, {
+      trackIndex: -1,
+      muted: false,
+      getCurrentAmplitude: computeAmplitude,
+      source,
+    });
+  });
+
   return (
     <Panel class={styles.player}>
       <div class={styles.player__container}>
         <video
           class={styles.player__video}
           src={videoFile() != null ? convertFileSrc(videoFile()!) : ""}
-          ref={(el) => setVideoElement(el)}
+          ref={(ref) => setVideoElement(ref)}
           controls
           onPause={() => updatePlaying(false)}
           onPlay={() => {

@@ -6,7 +6,7 @@ use std::{
 
 use crate::FFPROBE_PATH;
 
-const CREATE_NO_WINDOW: u32 = 0x08000000;
+use super::CREATE_NO_WINDOW;
 
 #[tauri::command]
 pub async fn ffprobe_cmd(filepath: &str) -> Result<String, String> {

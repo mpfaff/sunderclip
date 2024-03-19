@@ -162,15 +162,12 @@ export type FfprobeOutput = {
   };
 };
 
-export type PlayerData = {
-  currentTime: number;
-  playing: boolean;
-  audioTracks: AudioTrack[];
-};
-
 export type AudioTrack = {
   trackIndex: number;
   muted: boolean;
+  source: MediaElementAudioSourceNode;
+  audio?: HTMLAudioElement;
+  getCurrentAmplitude: () => number;
 };
 
 export type TrimRange = {

@@ -1,6 +1,8 @@
 .audio_mixer {
   grid-area: audio_mixer;
   padding-bottom: 0;
+  container-type: size;
+  container-name: audio-mixer;
 }
 
 .audio_mixer__heading {
@@ -69,4 +71,14 @@
   background-color: rgb(21, 21, 21);
   transform: scaleY(var(--silence));
   transform-origin: top;
+}
+
+@container audio-mixer (max-height: 225px) {
+  .audio_mixer__streams {
+    flex-direction: column;
+  }
+
+  .audio_mixer__stream {
+    flex-direction: row;
+  }
 }

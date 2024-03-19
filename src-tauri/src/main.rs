@@ -26,6 +26,7 @@ use std::{
 static FFMPEG_HOME: OnceLock<PathBuf> = OnceLock::new();
 static FFPROBE_PATH: OnceLock<PathBuf> = OnceLock::new();
 static FFMPEG_PATH: OnceLock<PathBuf> = OnceLock::new();
+static TEMP_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 use tauri::{
     menu::{Menu, MenuEvent, MenuItem, Submenu},
@@ -33,6 +34,16 @@ use tauri::{
 };
 
 mod commands;
+
+fn get_app_temp_data_dir(app: &App) -> PathBuf {
+    let temp_data_path = app
+        .handle()
+        .path()
+        .temp_dir()
+        .expect("Failed to get local temp directory");
+
+    return temp_data_path;
+}
 
 fn get_app_local_data_dir(app: &App) -> PathBuf {
     let local_data_path = app
@@ -45,6 +56,14 @@ fn get_app_local_data_dir(app: &App) -> PathBuf {
 }
 
 fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+    let mut temp_data_path = get_app_temp_data_dir(app);
+    temp_data_path.push(&app.package_info().name);
+
+    if !temp_data_path.exists() {
+        create_dir(temp_data_path.as_path()).expect("Failed to create app temp data directory");
+    }
+    TEMP_PATH.set(temp_data_path).unwrap();
+
     let local_data_path = get_app_local_data_dir(app);
 
     if !local_data_path.exists() {
@@ -134,7 +153,8 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             commands::close_splashscreen::close_splashscreen,
-            commands::ffprobe_cmd::ffprobe_cmd
+            commands::ffprobe_cmd::ffprobe_cmd,
+            commands::extract_audio::extract_audio,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
