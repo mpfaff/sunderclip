@@ -1,5 +1,5 @@
 import { For, Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
-import { Event, UnlistenFn, emit, listen } from "@tauri-apps/api/event";
+import { emit } from "@tauri-apps/api/event";
 
 import Panel from "../panel/Panel";
 
@@ -31,22 +31,47 @@ export function createAudioAnalyser(audioContext: AudioContext, source: HTMLMedi
   return { computeAmplitude, source: mediaSource };
 }
 
+const MAX_AUDIO_DIFF = 0.1;
+
 export default function AudioMixer() {
   const [{ videoFile, mediaData }] = useAppContext();
-  const [{ playing, audioTracks, audioContext }, { setAudioTracks }] = usePlayerContext();
+  const [{ playing, currentTime, audioTracks, audioContext }, { setAudioTracks }] = usePlayerContext();
 
   const [audioMeters, setAudioMeters] = createSignal<number[]>([]);
 
-  function render() {
+  function updateAudioTracks() {
     const result: number[] = [];
-    for (const audioTrack of audioTracks) result.push(audioTrack.getCurrentAmplitude());
+    for (let i = 0; i < audioTracks.length; i++) {
+      const audioTrack = audioTracks[i];
+      result.push(audioTrack.getCurrentAmplitude());
+
+      if (i > 0) {
+        audioTrack!.audio!.play();
+      }
+    }
     setAudioMeters(result);
 
-    if (playing()) requestAnimationFrame(render);
+    if (playing()) {
+      requestAnimationFrame(updateAudioTracks);
+    } else {
+      for (let i = 0; i < audioTracks.length; i++) {
+        const audioTrack = audioTracks[i];
+
+        if (i > 0) audioTrack!.audio!.pause();
+      }
+    }
   }
 
   createEffect(() => {
-    if (playing()) render();
+    if (playing()) updateAudioTracks();
+  });
+
+  createEffect(() => {
+    const videoTime = currentTime();
+
+    audioTracks.slice(1).forEach((track) => {
+      if (Math.abs(videoTime - track!.audio!.currentTime) > MAX_AUDIO_DIFF) track!.audio!.currentTime = videoTime;
+    });
   });
 
   async function requestAudioExtract(videoSource: string, audioTrackIndex: number) {
@@ -84,7 +109,7 @@ export default function AudioMixer() {
       const { computeAmplitude, source } = createAudioAnalyser(audioContext, audio);
 
       // Slightly bugged as pushes to array on hot reload
-      setAudioTracks(audioTracks.length, {
+      setAudioTracks(i, {
         trackIndex: stream.index,
         muted: false,
         getCurrentAmplitude: computeAmplitude,

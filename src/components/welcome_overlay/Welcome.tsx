@@ -8,7 +8,7 @@ import { useAppContext } from "../../contexts/AppContext";
 
 type FileDropPayload = { paths: string[]; position: { x: number; y: number } };
 
-const VIDEO_FILE_EXT_ARRAY = Array.from(["mp4", "webm", "ogg"]);
+const VIDEO_FILE_EXT_ARRAY = ["mp4", "webm", "ogg"];
 const VIDEO_FILE_EXTENSIONS = new Set(VIDEO_FILE_EXT_ARRAY);
 
 export default function Welcome() {
