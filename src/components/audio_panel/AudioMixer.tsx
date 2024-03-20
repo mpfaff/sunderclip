@@ -1,5 +1,4 @@
-import { For, Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
-import { emit } from "@tauri-apps/api/event";
+import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 
 import Panel from "../panel/Panel";
 
@@ -44,22 +43,21 @@ export default function AudioMixer() {
       const audioTrack = audioTracks[i];
       result.push(audioTrack.getCurrentAmplitude());
 
-      if (i > 0) audioTrack.sourceElement.play();
-    }
-    setAudioMeters(result);
+      if (i === 0) continue;
+      if (playing()) {
+        if (audioTrack.sourceElement.paused) audioTrack.sourceElement.play();
 
-    if (playing()) {
-      requestAnimationFrame(updateAudioTracks);
-    } else {
-      for (let i = 0; i < audioTracks.length; i++) {
-        const audioTrack = audioTracks[i];
-
-        if (i > 0) audioTrack.sourceElement.pause();
+        requestAnimationFrame(updateAudioTracks);
+      } else {
+        audioTrack.sourceElement.pause();
       }
     }
+
+    setAudioMeters(result);
   }
 
   createEffect(() => {
+    // Keep updating audio meters while playing
     if (playing()) updateAudioTracks();
   });
 
@@ -70,6 +68,7 @@ export default function AudioMixer() {
   });
 
   createEffect(() => {
+    // Sync audio tracks to video
     const videoTime = currentTime();
 
     audioTracks.slice(1).forEach((track) => {
@@ -79,42 +78,48 @@ export default function AudioMixer() {
     });
   });
 
-  createEffect(
-    () => {
-      const data = mediaData();
-      const video = videoFile();
-      if (data == null || video == null) return;
+  createEffect(() => {
+    const data = mediaData();
+    const video = videoFile();
+    if (data == null || video == null) return;
 
-      (data.streams.filter((stream) => stream.codec_type === "audio") as FfprobeAudioStream[]).forEach(async (stream, i) => {
-        if (i === 0) return setAudioTracks(0, "trackIndex", stream.index);
+    (data.streams.filter((stream) => stream.codec_type === "audio") as FfprobeAudioStream[]).forEach(async (stream, i) => {
+      if (i === 0) return setAudioTracks(0, "trackIndex", stream.index);
 
-        const blob = await (await fetch(`${location.protocol}//extract-audio.${location.hostname}/${encodeURIComponent(video)}/${stream.index}`)).blob();
+      const blob = await (await fetch(`${location.protocol}//extract-audio.${location.hostname}/${encodeURIComponent(video)}/${stream.index}`)).blob();
 
-        const audio = new Audio(URL.createObjectURL(blob));
-        audio.crossOrigin = "anonymous";
+      const audio = new Audio(URL.createObjectURL(blob));
+      audio.crossOrigin = "anonymous";
 
-        const { computeAmplitude, source } = createAudioAnalyser(audioContext, audio);
+      const { computeAmplitude, source } = createAudioAnalyser(audioContext, audio);
 
-        setAudioTracks(i, {
-          trackIndex: stream.index,
-          muted: false,
-          getCurrentAmplitude: computeAmplitude,
-          sourceElement: audio,
-          sourceNode: source,
-        });
+      setAudioTracks(i, {
+        trackIndex: stream.index,
+        muted: false,
+        getCurrentAmplitude: computeAmplitude,
+        sourceElement: audio,
+        sourceNode: source,
       });
-    },
-    { name: "asdf" }
-  );
+    });
+  });
 
   onCleanup(() => {
     audioTracks.slice(1).forEach((track) => {
       track.sourceNode.disconnect();
-      URL.revokeObjectURL(track.sourceElement.src);
+
+      // Remove audio: https://stackoverflow.com/questions/3258587/how-to-properly-unload-destroy-a-video-element
+      // This will explicitly work only after about a second of the component being loaded
+      track.sourceElement.pause();
+      track.sourceElement.removeAttribute("src");
+      track.sourceElement.load();
+      track.sourceElement.src = "";
+      track.sourceElement.srcObject = null;
       track.sourceElement.remove();
+
+      URL.revokeObjectURL(track.sourceElement.src);
     });
 
-    setAudioTracks(audioTracks[0]);
+    setAudioTracks([audioTracks[0]]);
   });
 
   return (
