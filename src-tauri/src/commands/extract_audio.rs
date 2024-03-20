@@ -1,4 +1,7 @@
-use std::{error::Error, os::windows::process::CommandExt, process::Stdio, str::FromStr};
+use std::{
+    error::Error, os::windows::process::CommandExt, process::Stdio, str::FromStr,
+    string::FromUtf8Error,
+};
 
 use serde::{Deserialize, Serialize};
 use tauri::{
@@ -19,24 +22,87 @@ struct ExtractAudioParams {
 }
 
 #[derive(Debug)]
-struct InvalidUrlError;
-impl std::fmt::Display for InvalidUrlError {
+enum InvalidUrlError<'a> {
+    MissingDelimiter {
+        string: &'a str,
+    },
+    UnrecognizedFormat {
+        string: &'a str,
+    },
+    UnexpectedDelimiter {
+        string: &'a str,
+        offset: usize,
+    },
+    InvalidVideoSource {
+        encoded: &'a str,
+        cause: FromUtf8Error,
+    },
+    InvalidAudioTrack {
+        string: &'a str,
+        cause: std::num::ParseIntError,
+    },
+}
+
+impl std::fmt::Display for InvalidUrlError<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        return f.write_str("Invalid URL");
+        match *self {
+            InvalidUrlError::MissingDelimiter { string } => {
+                write!(f, "Missing delimiter in {:?}", string)
+            }
+            InvalidUrlError::UnrecognizedFormat { string } => {
+                write!(f, "Unrecognized format in {:?}", string)
+            }
+            InvalidUrlError::UnexpectedDelimiter { string, offset } => {
+                write!(f, "Unexpected delimiter in {:?} at {:?}", string, offset)
+            }
+            InvalidUrlError::InvalidVideoSource { encoded, ref cause } => {
+                write!(
+                    f,
+                    "Invalid video source provided in {:?}: {}",
+                    encoded, cause
+                )
+            }
+            InvalidUrlError::InvalidAudioTrack { string, ref cause } => {
+                write!(
+                    f,
+                    "Invalid audio track index provided in {:?}: {}",
+                    string, cause
+                )
+            }
+        }
     }
 }
-impl Error for InvalidUrlError {}
+impl Error for InvalidUrlError<'_> {}
 
-impl FromStr for ExtractAudioParams {
-    type Err = InvalidUrlError;
+impl ExtractAudioParams {
+    pub fn from_str(s: &str) -> Result<Self, InvalidUrlError<'_>> {
+        let rest = s
+            .strip_prefix("/")
+            .ok_or_else(|| InvalidUrlError::UnrecognizedFormat { string: s })?;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let Some((video_source, audio_track_index)) = s.split_once("/") else {
-            return Err(InvalidUrlError);
+        let Some((video_source, audio_track_index)) = rest.split_once("/") else {
+            return Err(InvalidUrlError::MissingDelimiter { string: s });
         };
 
-        let video_source = urlencoding::decode(video_source).map_err(|_| InvalidUrlError)?;
-        let audio_track_index = audio_track_index.parse().map_err(|e| InvalidUrlError)?;
+        if let Some(i) = audio_track_index.chars().position(|char| char == '/') {
+            return Err(InvalidUrlError::UnexpectedDelimiter {
+                string: s,
+                offset: video_source.len() + i + 1 + 1,
+            });
+        }
+
+        let video_source =
+            urlencoding::decode(video_source).map_err(|e| InvalidUrlError::InvalidVideoSource {
+                encoded: video_source,
+                cause: e,
+            })?;
+        let audio_track_index =
+            audio_track_index
+                .parse()
+                .map_err(|e| InvalidUrlError::InvalidAudioTrack {
+                    string: s,
+                    cause: e,
+                })?;
 
         Ok(Self {
             video_source: video_source.into_owned(),
@@ -52,11 +118,7 @@ pub async fn extract_audio_protocol(
     let ExtractAudioParams {
         video_source,
         audio_track_index,
-    } = req
-        .uri()
-        .path()
-        .parse::<ExtractAudioParams>()
-        .map_err(|e| e.to_string())?;
+    } = ExtractAudioParams::from_str(req.uri().path()).map_err(|e| e.to_string())?;
 
     let mut data: Vec<u8> = Vec::new();
 
@@ -71,7 +133,7 @@ pub async fn extract_audio_protocol(
             "-f",
             "mp3",
         ])
-        .arg(&"pipe:1")
+        .arg(&"pipe:2")
         .creation_flags(CREATE_NO_WINDOW)
         .stderr(Stdio::piped())
         .spawn()
@@ -84,8 +146,21 @@ pub async fn extract_audio_protocol(
         .await
         .map_err(|e| e.to_string())?;
 
+    let data_length = data.len();
     let mut req = http::Response::new(data);
-    req.headers_mut()
-        .append("Content-Type", HeaderValue::from_static("audio/mp3"));
+
+    let headers = req.headers_mut();
+    headers.append("Content-Type", HeaderValue::from_static("audio/mp3"));
+    headers.append("Accept-Ranges", HeaderValue::from_static("bytes"));
+    headers.append(
+        "Content-Length",
+        HeaderValue::from_str(data_length.to_string().as_str()).unwrap(),
+    );
+    headers.append(
+        "Content-Range",
+        HeaderValue::from_str(format!("bytes */{}", data_length).as_str()).unwrap(),
+    );
+    headers.append("Connection", HeaderValue::from_static("Keep-Alive"));
+
     Ok(req)
 }

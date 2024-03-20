@@ -22,7 +22,7 @@ export function secondsToHMSMs(seconds: number, framerate?: number) {
   const s = Math.floor(secondsLoopback % 60);
 
   const msOrFrames = isFrames ? Math.floor((seconds * framerate) % framerate) : Math.floor((seconds * 1000) % 1000000);
-  const digits = framerate?.toString().length;
+  const digits = framerate != null ? Math.floor(framerate).toString().length : null;
 
   return (
     ("0" + h).slice(-2) +

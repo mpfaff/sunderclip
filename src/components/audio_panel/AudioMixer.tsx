@@ -9,7 +9,6 @@ import { FfprobeAudioStream } from "../../../types";
 
 import styles from "./AudioMixer.module.css";
 import panelStyles from "../panel/PanelCommon.module.css";
-import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 
 export function createAudioAnalyser(audioContext: AudioContext, source: HTMLMediaElement) {
   const mediaSource = audioContext.createMediaElementSource(source);
@@ -45,9 +44,7 @@ export default function AudioMixer() {
       const audioTrack = audioTracks[i];
       result.push(audioTrack.getCurrentAmplitude());
 
-      if (i > 0) {
-        audioTrack!.sourceElement!.play();
-      }
+      if (i > 0) audioTrack.sourceElement.play();
     }
     setAudioMeters(result);
 
@@ -76,56 +73,48 @@ export default function AudioMixer() {
     const videoTime = currentTime();
 
     audioTracks.slice(1).forEach((track) => {
-      if (Math.abs(videoTime - track.sourceElement.currentTime) > MAX_AUDIO_DIFF) track.sourceElement.currentTime = videoTime;
+      if (Math.abs(videoTime - track.sourceElement.currentTime) > MAX_AUDIO_DIFF) {
+        track.sourceElement.currentTime = videoTime;
+      }
     });
   });
 
-  async function requestAudioExtract(videoSource: string, audioTrackIndex: number) {
-    console.log("E");
+  createEffect(
+    () => {
+      const data = mediaData();
+      const video = videoFile();
+      if (data == null || video == null) return;
 
-    const response = await invoke<string>("extract_audio", {
-      videoSource,
-      audioTrackIndex,
-    });
+      (data.streams.filter((stream) => stream.codec_type === "audio") as FfprobeAudioStream[]).forEach(async (stream, i) => {
+        if (i === 0) return setAudioTracks(0, "trackIndex", stream.index);
 
-    console.log(response);
+        const blob = await (await fetch(`${location.protocol}//extract-audio.${location.hostname}/${encodeURIComponent(video)}/${stream.index}`)).blob();
 
-    try {
-      const data = JSON.parse(response) as { audio_source: string };
+        const audio = new Audio(URL.createObjectURL(blob));
+        audio.crossOrigin = "anonymous";
 
-      return data.audio_source;
-    } catch (err) {
-      console.error(err);
+        const { computeAmplitude, source } = createAudioAnalyser(audioContext, audio);
 
-      return null;
-    }
-  }
-
-  createEffect(() => {
-    const data = mediaData();
-    const video = videoFile();
-    if (data == null || video == null) return;
-
-    (data.streams.filter((stream) => stream.codec_type === "audio") as FfprobeAudioStream[]).forEach(async (stream, i) => {
-      if (i === 0) return setAudioTracks(0, "trackIndex", stream.index);
-
-      const audio = new Audio(`${location.protocol}//extract-audio.${location.hostname}/${encodeURIComponent(video)}/${stream.index}`);
-      audio.crossOrigin = "anonymous";
-
-      const { computeAmplitude, source } = createAudioAnalyser(audioContext, audio);
-
-      setAudioTracks(i, {
-        trackIndex: stream.index,
-        muted: false,
-        getCurrentAmplitude: computeAmplitude,
-        sourceElement: audio,
-        sourceNode: source,
+        setAudioTracks(i, {
+          trackIndex: stream.index,
+          muted: false,
+          getCurrentAmplitude: computeAmplitude,
+          sourceElement: audio,
+          sourceNode: source,
+        });
       });
-    });
-  });
+    },
+    { name: "asdf" }
+  );
 
   onCleanup(() => {
-    audioTracks.slice(1).forEach((stream) => URL.revokeObjectURL(stream.sourceElement.src));
+    audioTracks.slice(1).forEach((track) => {
+      track.sourceNode.disconnect();
+      URL.revokeObjectURL(track.sourceElement.src);
+      track.sourceElement.remove();
+    });
+
+    setAudioTracks(audioTracks[0]);
   });
 
   return (
