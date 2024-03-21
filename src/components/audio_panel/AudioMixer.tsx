@@ -38,22 +38,24 @@ export default function AudioMixer() {
   const [audioMeters, setAudioMeters] = createSignal<number[]>([]);
 
   function updateAudioTracks() {
+    const isPlaying = playing();
+
     const result: number[] = [];
     for (let i = 0; i < audioTracks.length; i++) {
       const audioTrack = audioTracks[i];
       result.push(audioTrack.getCurrentAmplitude());
 
-      if (i === 0) continue;
-      if (playing()) {
-        if (audioTrack.sourceElement.paused) audioTrack.sourceElement.play();
-
-        requestAnimationFrame(updateAudioTracks);
-      } else {
-        audioTrack.sourceElement.pause();
+      if (i > 0) {
+        if (isPlaying) {
+          if (audioTrack.sourceElement.paused) audioTrack.sourceElement.play();
+        } else {
+          audioTrack.sourceElement.pause();
+        }
       }
     }
 
     setAudioMeters(result);
+    if (isPlaying) requestAnimationFrame(updateAudioTracks);
   }
 
   createEffect(() => {
@@ -130,10 +132,12 @@ export default function AudioMixer() {
           <For each={audioTracks}>
             {(stream, i) => (
               <li class={styles.audio_mixer__stream}>
-                <span class={styles.audio_mixer__stream_label} contentEditable>
-                  Track {i() + 1}
-                </span>
-                <span class={styles.audio_mixer__stream_internal}>(stream {stream.trackIndex == -1 ? "?" : stream.trackIndex})</span>
+                <div class={styles.audio_mixer__info}>
+                  <span class={styles.audio_mixer__stream_label} contentEditable>
+                    Track {i() + 1}
+                  </span>
+                  <span class={styles.audio_mixer__stream_internal}>(stream {stream.trackIndex == -1 ? "?" : stream.trackIndex})</span>
+                </div>
 
                 <div class={styles.audio_mixer__btns}>
                   <button class={styles.audio_mixer__btn} onClick={() => setAudioTracks(i(), "muted", !stream.muted)}>
