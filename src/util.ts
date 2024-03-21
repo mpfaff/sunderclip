@@ -12,7 +12,7 @@ export function round(number: number, places = 2) {
   return Math.round(number * accuracy) / accuracy;
 }
 
-export function secondsToHMSMs(seconds: number, framerate?: number) {
+export function formatSeconds(seconds: number, framerate?: number) {
   const isFrames = framerate != null;
 
   const secondsLoopback = seconds % 3600;

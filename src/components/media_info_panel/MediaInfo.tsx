@@ -28,7 +28,7 @@ export default function MediaInfo() {
 
     setMediaData(null);
 
-    const rawData: string = await invoke("ffprobe_cmd", {
+    const rawData = await invoke<string>("ffprobe_cmd", {
       filepath: file,
     });
 

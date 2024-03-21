@@ -2,7 +2,7 @@ import { createSignal, onCleanup, onMount } from "solid-js";
 import Panel from "../panel/Panel";
 
 import styles from "./Timeline.module.css";
-import { secondsToHMSMs } from "../../util";
+import { formatSeconds } from "../../util";
 import { useAppContext } from "../../contexts/AppContext";
 import { usePlayerContext } from "../../contexts/PlayerContext";
 
@@ -55,7 +55,7 @@ export default function Timeline() {
     <Panel class={styles.timeline}>
       <div class={styles.timeline__info}>
         <p class={styles.timeline__timecode} contenteditable>
-          {secondsToHMSMs(currentTime(), timecodeType() === "frames" ? mediaData()?.fps || 1 : undefined)}
+          {formatSeconds(currentTime(), timecodeType() === "frames" ? mediaData()?.fps || 1 : undefined)}
         </p>
       </div>
       <div class={styles.timeline__controls}>
