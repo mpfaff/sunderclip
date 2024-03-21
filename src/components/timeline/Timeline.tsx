@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, onMount } from "solid-js";
+import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import Panel from "../panel/Panel";
 
 import styles from "./Timeline.module.css";
@@ -7,8 +7,8 @@ import { useAppContext } from "../../contexts/AppContext";
 import { usePlayerContext } from "../../contexts/PlayerContext";
 
 export default function Timeline() {
-  const [{ mediaData }] = useAppContext();
-  const [{ currentTime }] = usePlayerContext();
+  const [{ videoElement, mediaData }] = useAppContext();
+  const [{ currentTime }, { setCurrentTime }] = usePlayerContext();
 
   const [dragging, setDragging] = createSignal(false);
   const [cursorPos, setCursorPos] = createSignal(0);
@@ -17,8 +17,14 @@ export default function Timeline() {
   let cursorRef: HTMLDivElement;
   let timelineBarRef: HTMLDivElement;
 
+  function updateVideoTime(location: number) {
+    videoElement()!.currentTime = location;
+    setCurrentTime(location);
+  }
+
   function handleCursorDown(event: PointerEvent) {
     setDragging(true);
+    handleCursorMove(event);
   }
 
   function handleCursorMove(event: PointerEvent) {
@@ -34,12 +40,22 @@ export default function Timeline() {
 
     const percentage = Math.max(0, Math.min((delta - cursorCenter) / (timelineBarRect.width - cursorWidth), 1));
 
+    updateVideoTime(videoElement()!.duration * percentage);
     setCursorPos(Math.max(0, Math.min(delta, timelineBarRect.width - cursorCenter) - cursorCenter));
   }
 
   function handleCursorUp(event: PointerEvent) {
     setDragging(false);
   }
+
+  createEffect(() => {
+    if (dragging()) return;
+
+    const cursorWidth = cursorRef.getBoundingClientRect().width;
+    const timelineBarRect = timelineBarRef.getBoundingClientRect();
+
+    setCursorPos((currentTime() / videoElement()!.duration) * (timelineBarRect.width - cursorWidth));
+  });
 
   onMount(() => {
     window.addEventListener("pointermove", handleCursorMove);

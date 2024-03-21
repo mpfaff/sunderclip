@@ -1,19 +1,29 @@
 .player {
   padding: 0;
-  overflow: hidden;
 }
 
 .player__container {
-  width: 100%;
-  height: 100%;
+  flex-grow: 1;
   background-color: rgb(12, 12, 12);
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 .player__video {
   max-width: 100%;
   max-height: 100%;
   flex-grow: 1;
+}
+
+.player__btns {
+  display: flex;
+  justify-content: center;
+  padding: 0.25em;
+}
+
+.player__btn {
+  font-size: 0.75rem;
+  padding: 0.15em 0.25em;
 }

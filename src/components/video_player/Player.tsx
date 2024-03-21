@@ -36,7 +36,7 @@ export default function Player() {
   });
 
   return (
-    <Panel class={styles.player}>
+    <Panel class={styles.player} column>
       <div class={styles.player__container}>
         <video
           class={styles.player__video}
@@ -52,6 +52,11 @@ export default function Player() {
           onEnded={() => updatePlaying(false)}
           crossorigin="anonymous"
         ></video>
+      </div>
+      <div class={styles.player__btns}>
+        <button class={styles.player__btn}>{"<"}</button>
+        <button class={styles.player__btn}>play</button>
+        <button class={styles.player__btn}>{">"}</button>
       </div>
     </Panel>
   );
