@@ -36,6 +36,8 @@ export default function AppProvider(props: AppProvider) {
   function newProject() {
     // TODO: implement actual new project dialog
     setVideoFile(null);
+    setMediaData(null);
+    setTrim({ start: 0, end: 0 });
   }
 
   onMount(async () => {

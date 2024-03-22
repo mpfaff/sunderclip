@@ -31,10 +31,12 @@ export function createAudioAnalyser(audioContext: AudioContext, source: HTMLMedi
 
 const MAX_AUDIO_DIFF = 0.1;
 
+type AudioAbortion = { abortController: AbortController; id: number };
+
 export default function AudioMixer() {
   const [{ videoFile, mediaData }] = useAppContext();
   const [{ playing, currentTime, audioTracks, audioContext }, { setAudioTracks }] = usePlayerContext();
-
+  const [audioRequests, setAudioRequests] = createSignal<AudioAbortion[]>([]);
   const [audioMeters, setAudioMeters] = createSignal<number[]>([]);
 
   function updateAudioTracks() {
@@ -88,7 +90,18 @@ export default function AudioMixer() {
     (data.streams.filter((stream) => stream.codec_type === "audio") as FfprobeAudioStream[]).forEach(async (stream, i) => {
       if (i === 0) return setAudioTracks(0, "trackIndex", stream.index);
 
-      const blob = await (await fetch(`${location.protocol}//extract-audio.${location.hostname}/${encodeURIComponent(video)}/${stream.index}`)).blob();
+      const abortController = new AbortController();
+      let id = 1;
+      setAudioRequests((prev) => {
+        id = prev.length;
+        return [...prev, { abortController, id }];
+      });
+
+      const blob = await (
+        await fetch(`${location.protocol}//extract-audio.${location.hostname}/${encodeURIComponent(video)}/${stream.index}`, {
+          signal: abortController.signal,
+        })
+      ).blob();
 
       const audio = new Audio(URL.createObjectURL(blob));
       audio.crossOrigin = "anonymous";
@@ -102,15 +115,28 @@ export default function AudioMixer() {
         sourceElement: audio,
         sourceNode: source,
       });
+
+      removeAudioReqAborter(id);
     });
   });
 
-  onCleanup(() => {
+  function removeAudioReqAborter(id: number) {
+    setAudioRequests((requests) => requests.filter((req) => req.id === id));
+  }
+
+  function abortRequest(request: AudioAbortion) {
+    request.abortController.abort();
+    removeAudioReqAborter(request.id);
+  }
+
+  function cleanup() {
+    audioRequests().forEach((req) => abortRequest(req));
+
     audioTracks.slice(1).forEach((track) => {
       track.sourceNode.disconnect();
 
       // Remove audio: https://stackoverflow.com/questions/3258587/how-to-properly-unload-destroy-a-video-element
-      // This will explicitly work only after about a second of the component being loaded
+      // This will consistently work only if the audio has been loaded for longer than a few seconds
       track.sourceElement.pause();
       track.sourceElement.removeAttribute("src");
       track.sourceElement.load();
@@ -122,7 +148,13 @@ export default function AudioMixer() {
     });
 
     setAudioTracks([audioTracks[0]]);
+  }
+
+  createEffect(() => {
+    if (videoFile() == null && audioTracks.length > 1) cleanup();
   });
+
+  onCleanup(() => cleanup());
 
   return (
     <Panel class={styles.audio_mixer} column>
