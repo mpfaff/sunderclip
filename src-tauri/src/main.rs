@@ -181,6 +181,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::close_splashscreen::close_splashscreen,
             commands::ffprobe_cmd::ffprobe_cmd,
+            commands::toggle_fullscreen::toggle_fullscreen
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

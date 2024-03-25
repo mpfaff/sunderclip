@@ -43,7 +43,6 @@ export default function Player() {
           preload="auto"
           src={videoFile() != null ? convertFileSrc(videoFile()!) : ""}
           ref={(ref) => setVideoElement(ref)}
-          controls
           onPause={() => updatePlaying(false)}
           onPlay={() => {
             updatePlaying(true);

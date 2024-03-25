@@ -8,22 +8,61 @@ import { usePlayerContext } from "../../contexts/PlayerContext";
 
 export default function Timeline() {
   const [{ videoElement, mediaData }] = useAppContext();
-  const [{ currentTime }, { setCurrentTime }] = usePlayerContext();
+  const [{ currentTime, playing }, { setCurrentTime, setPlaying }] = usePlayerContext();
 
   const [dragging, setDragging] = createSignal(false);
+  const [wasPlaying, setWasPlaying] = createSignal(false);
   const [cursorPos, setCursorPos] = createSignal(0);
   const [timecodeType, setTimecodeType] = createSignal<"frames" | "time">("frames");
 
   let cursorRef: HTMLDivElement;
   let timelineBarRef: HTMLDivElement;
 
+  function pauseVideo() {
+    videoElement()!.pause();
+  }
+
+  function resumeVideo() {
+    videoElement()!.play();
+  }
+
+  function toggleVideoPlaying() {
+    if (playing()) {
+      pauseVideo();
+    } else {
+      resumeVideo();
+    }
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    switch (event.code) {
+      case "Space": {
+        toggleVideoPlaying();
+        break;
+      }
+      case "ArrowLeft": {
+        break;
+      }
+      case "ArrowRight": {
+        break;
+      }
+      default:
+        return;
+    }
+
+    event.preventDefault();
+  }
+
   function updateVideoTime(location: number) {
     videoElement()!.currentTime = location;
+
     setCurrentTime(location);
   }
 
   function handleCursorDown(event: PointerEvent) {
+    setWasPlaying(playing());
     setDragging(true);
+    pauseVideo();
     handleCursorMove(event);
   }
 
@@ -44,8 +83,11 @@ export default function Timeline() {
     setCursorPos(Math.max(0, Math.min(delta, timelineBarRect.width - cursorCenter) - cursorCenter));
   }
 
-  function handleCursorUp(event: PointerEvent) {
+  function handleCursorUp(_: PointerEvent) {
+    if (!dragging()) return;
+
     setDragging(false);
+    if (wasPlaying()) resumeVideo();
   }
 
   createEffect(() => {
@@ -54,17 +96,22 @@ export default function Timeline() {
     const cursorWidth = cursorRef.getBoundingClientRect().width;
     const timelineBarRect = timelineBarRef.getBoundingClientRect();
 
-    setCursorPos((currentTime() / videoElement()!.duration) * (timelineBarRect.width - cursorWidth));
+    const time = currentTime();
+    const duration = videoElement()!.duration;
+
+    setCursorPos((!isNaN(duration) ? time / duration : 0) * (timelineBarRect.width - cursorWidth));
   });
 
   onMount(() => {
     window.addEventListener("pointermove", handleCursorMove);
     window.addEventListener("pointerup", handleCursorUp);
+    window.addEventListener("keydown", handleKeydown);
   });
 
   onCleanup(() => {
     window.removeEventListener("pointermove", handleCursorMove);
     window.removeEventListener("pointerup", handleCursorUp);
+    window.removeEventListener("keydown", handleKeydown);
   });
 
   return (

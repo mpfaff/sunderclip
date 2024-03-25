@@ -64,6 +64,9 @@ body {
   font-size: 1rem;
   color: hsl(var(--clr-neutral-900));
   background-color: hsl(var(--clr-neutral-100));
+
+  /* App should never overflow anyway, this prevents elastic scrolling  */
+  overflow: hidden;
 }
 
 h1,
