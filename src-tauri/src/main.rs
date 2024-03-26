@@ -17,7 +17,6 @@ const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/linux/ffmpeg.zst");
 const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/linux/ffprobe.zst");
 
 use std::{
-    error::Error,
     fs::{create_dir, File},
     io::BufWriter,
     path::PathBuf,
@@ -32,7 +31,7 @@ static TEMP_PATH: OnceLock<PathBuf> = OnceLock::new();
 use tauri::{
     http::{self, HeaderValue},
     menu::{Menu, MenuEvent, MenuItem, Submenu},
-    App, AppHandle, Manager, Window, Wry,
+    App, Manager, Window, Wry,
 };
 
 mod commands;

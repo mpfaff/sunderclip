@@ -1,14 +1,7 @@
-use std::{
-    error::Error, os::windows::process::CommandExt, process::Stdio, str::FromStr,
-    string::FromUtf8Error,
-};
+use std::{error::Error, process::Stdio, string::FromUtf8Error};
 
 use serde::{Deserialize, Serialize};
-use tauri::{
-    self,
-    http::{self, HeaderValue},
-    AppHandle,
-};
+use tauri::http::{self, HeaderValue};
 use tokio::{io::AsyncReadExt as _, process::Command};
 
 use crate::FFMPEG_PATH;

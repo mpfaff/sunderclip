@@ -11,7 +11,6 @@ export default function Timeline() {
   const [{ currentTime, playing }, { setCurrentTime, setPlaying }] = usePlayerContext();
 
   const [dragging, setDragging] = createSignal(false);
-  const [wasPlaying, setWasPlaying] = createSignal(false);
   const [cursorPos, setCursorPos] = createSignal(0);
   const [timecodeType, setTimecodeType] = createSignal<"frames" | "time">("frames");
 
@@ -53,6 +52,10 @@ export default function Timeline() {
     event.preventDefault();
   }
 
+  function setPlaybackSpeed(speed: number) {
+    videoElement()!.playbackRate = speed;
+  }
+
   function updateVideoTime(location: number) {
     videoElement()!.currentTime = location;
 
@@ -60,9 +63,7 @@ export default function Timeline() {
   }
 
   function handleCursorDown(event: PointerEvent) {
-    setWasPlaying(playing());
     setDragging(true);
-    pauseVideo();
     handleCursorMove(event);
   }
 
@@ -86,8 +87,8 @@ export default function Timeline() {
   function handleCursorUp(_: PointerEvent) {
     if (!dragging()) return;
 
+    pauseVideo();
     setDragging(false);
-    if (wasPlaying()) resumeVideo();
   }
 
   createEffect(() => {
