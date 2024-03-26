@@ -18,12 +18,16 @@
 }
 
 .player__btns {
-  display: flex;
+  display: grid;
   justify-content: center;
-  padding: 0.25em;
+  grid-template-columns: repeat(5, 1fr);
+  margin: 0 auto;
+  padding: 0.2em;
+  gap: 0.15em;
 }
 
 .player__btn {
-  font-size: 0.75rem;
-  padding: 0.15em 0.25em;
+  background-color: transparent;
+  padding: 0.2em 0.3em;
+  color: hsl(var(--clr-neutral-800));
 }

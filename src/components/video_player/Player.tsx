@@ -53,9 +53,21 @@ export default function Player() {
         ></video>
       </div>
       <div class={styles.player__btns}>
-        <button class={styles.player__btn}>{"<"}</button>
-        <button class={styles.player__btn}>play</button>
-        <button class={styles.player__btn}>{">"}</button>
+        <button class={styles.player__btn}>
+          <i class="fa-sharp fa-regular fa-backward"></i>
+        </button>
+        <button class={styles.player__btn}>
+          <i class="fa-sharp fa-solid fa-backward-step"></i>
+        </button>
+        <button class={styles.player__btn} title={`${playing() ? "Pause" : "Resume"} video`}>
+          <i class={"fa-sharp fa-solid " + (playing() ? "fa-pause" : "fa-play")}></i>
+        </button>
+        <button class={styles.player__btn}>
+          <i class="fa-sharp fa-solid fa-forward-step"></i>
+        </button>
+        <button class={styles.player__btn}>
+          <i class="fa-sharp fa-regular fa-forward"></i>
+        </button>
       </div>
     </Panel>
   );

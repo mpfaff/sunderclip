@@ -123,11 +123,26 @@ export default function Timeline() {
         </p>
       </div>
       <div class={styles.timeline__controls}>
-        <div class={styles.timeline__container} ref={(ref) => (timelineBarRef = ref)} tabIndex={0} role="slider" aria-label="Seek slider">
-          <div class={styles.timeline__cursor} onPointerDown={handleCursorDown} style={`--translateX: ${cursorPos()}px`} ref={(ref) => (cursorRef = ref)}></div>
-          <div class={styles.timeline__bar}></div>
-          {/* <div class={styles.timeline__trim_start}></div>
-          <div class={styles.timeline__trim_end}></div> */}
+        <div class={styles.timeline__container}>
+          <div
+            class={styles.timeline__scrollbar}
+            ref={(ref) => (timelineBarRef = ref)}
+            tabIndex={0}
+            role="slider"
+            aria-label="Seek slider"
+            onPointerDown={handleCursorDown}
+          >
+            <div
+              class={`${styles.timeline__cursor} ${styles.timeline__playhead}`}
+              onPointerDown={handleCursorDown}
+              style={`--translateX: ${cursorPos()}px`}
+              ref={(ref) => (cursorRef = ref)}
+            ></div>
+          </div>
+          <div class={styles.timeline__bar}>
+            <div class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_start}`}></div>
+            <div class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_end}`}></div>
+          </div>
         </div>
       </div>
     </Panel>
