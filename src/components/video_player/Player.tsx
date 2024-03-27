@@ -10,7 +10,7 @@ import { createAudioAnalyser } from "../audio_panel/AudioMixer";
 
 export default function Player() {
   const [{ videoElement, videoFile }, { setVideoElement }] = useAppContext();
-  const [{ playing, audioContext }, { setCurrentTime, setPlaying, setAudioTracks }] = usePlayerContext();
+  const [{ playing, audioContext }, { setCurrentTime, setPlaying, setAudioTracks, video }] = usePlayerContext();
 
   function updatePlaying(playing: boolean) {
     setPlaying(playing);
@@ -53,19 +53,19 @@ export default function Player() {
         ></video>
       </div>
       <div class={styles.player__btns}>
-        <button class={styles.player__btn}>
+        <button class={styles.player__btn} aria-label="Step backward">
           <i class="fa-sharp fa-regular fa-backward"></i>
         </button>
-        <button class={styles.player__btn}>
+        <button class={styles.player__btn} aria-label="Jump to start of trim">
           <i class="fa-sharp fa-solid fa-backward-step"></i>
         </button>
-        <button class={styles.player__btn} title={`${playing() ? "Pause" : "Resume"} video`}>
+        <button class={styles.player__btn} onClick={video.togglePlayback} title={`${playing() ? "Pause" : "Resume"} video`}>
           <i class={"fa-sharp fa-solid " + (playing() ? "fa-pause" : "fa-play")}></i>
         </button>
-        <button class={styles.player__btn}>
+        <button class={styles.player__btn} aria-label="Jump to end of trim">
           <i class="fa-sharp fa-solid fa-forward-step"></i>
         </button>
-        <button class={styles.player__btn}>
+        <button class={styles.player__btn} aria-label="Step forward">
           <i class="fa-sharp fa-regular fa-forward"></i>
         </button>
       </div>

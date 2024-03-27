@@ -28,6 +28,10 @@
 
 .player__btn {
   background-color: transparent;
-  padding: 0.2em 0.3em;
+  padding: 0.2em 0.5em;
   color: hsl(var(--clr-neutral-800));
+}
+
+.player__btn:hover {
+  background-color: hsl(var(--clr-neutral-300));
 }

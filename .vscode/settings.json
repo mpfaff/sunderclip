@@ -1,4 +1,4 @@
 {
-  "cSpell.words": ["fullscreen", "sunderclip"],
+  "cSpell.words": ["fullscreen", "playhead", "sunderclip", "trimhead"],
   "rust-analyzer.linkedProjects": [".\\src-tauri\\Cargo.toml"]
 }
