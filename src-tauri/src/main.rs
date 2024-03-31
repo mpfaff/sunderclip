@@ -113,27 +113,45 @@ fn setup(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 fn create_menu(app: &App) -> Menu<Wry> {
     let new_btn = MenuItem::with_id(app, "new_proj", "New Project", true, None::<&str>).unwrap();
     let quit_btn = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).unwrap();
-
     let submenu_file = Submenu::new(app, "File", true).unwrap();
     submenu_file.append_items(&[&new_btn, &quit_btn]).unwrap();
 
-    let menu = Menu::new(app).unwrap();
-    menu.append_items(&[&submenu_file]).unwrap();
+    let prefs_btn = MenuItem::with_id(app, "prefs", "Preferences", true, None::<&str>).unwrap();
+    let submenu_options = Submenu::new(app, "Options", true).unwrap();
+    submenu_options.append_items(&[&prefs_btn]).unwrap();
 
+    let zoom_in_btn = MenuItem::with_id(app, "zoom_in", "Zoom In", true, None::<&str>).unwrap();
+    let zoom_out_btn = MenuItem::with_id(app, "zoom_out", "Zoom Out", true, None::<&str>).unwrap();
+    let submenu_view = Submenu::new(app, "View", true).unwrap();
+    submenu_view
+        .append_items(&[&zoom_in_btn, &zoom_out_btn])
+        .unwrap();
+
+    let submenu_edit = Submenu::new(app, "Edit", true).unwrap();
+
+    let submenu_help = Submenu::new(app, "Help", true).unwrap();
+
+    let menu = Menu::new(app).unwrap();
+    menu.append_items(&[
+        &submenu_file,
+        &submenu_edit,
+        &submenu_view,
+        &submenu_options,
+        &submenu_help,
+    ])
+    .unwrap();
     return menu;
 }
 
 fn handle_menu(window: &Window, event: MenuEvent) {
     match event.id.as_ref() {
-        "new_proj" => {
-            window.emit("new_proj", None::<()>).unwrap();
-        }
-
         "quit" => {
             std::process::exit(0);
         }
 
-        _ => { /* This should not be possible */ }
+        s => {
+            window.emit(s, None::<()>).unwrap();
+        }
     }
 }
 

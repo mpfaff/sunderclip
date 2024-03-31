@@ -173,7 +173,7 @@ export default function AudioMixer() {
 
                 <div class={styles.audio_mixer__btns}>
                   <button class={styles.audio_mixer__btn} onClick={() => setAudioTracks(i(), "muted", !stream.muted)}>
-                    {stream.muted ? "Muted" : "Mute"}
+                    <i class={"fa-sharp fa-solid " + (stream.muted ? "fa-volume-slash" : "fa-volume")}></i>
                   </button>
                 </div>
                 <div class={styles.audio_mixer__visualizer} role="meter" style={`--silence: ${100 - audioMeters()[i()] * 100}%`}></div>

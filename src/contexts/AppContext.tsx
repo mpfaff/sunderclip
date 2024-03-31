@@ -9,10 +9,11 @@ function createAppContext() {
   const [videoFile, setVideoFile] = createSignal<string | null>(null);
   const [mediaData, setMediaData] = createSignal<MediaData | null>(null);
   const [trim, setTrim] = createStore<TrimRange>({ start: 0, end: Infinity });
+  const [rendering, setRendering] = createSignal(false);
 
   return [
-    { videoElement, videoFile, mediaData, trim },
-    { setVideoElement, setVideoFile, setMediaData, setTrim },
+    { videoElement, videoFile, mediaData, rendering, trim },
+    { setVideoElement, setVideoFile, setMediaData, setTrim, setRendering },
   ] as const;
 }
 type AppContextType = ReturnType<typeof createAppContext>;
@@ -33,6 +34,7 @@ export default function AppProvider(props: AppProvider) {
   const [videoFile, setVideoFile] = createSignal<string | null>(null);
   const [mediaData, setMediaData] = createSignal<MediaData | null>(null);
   const [trim, setTrim] = createStore<TrimRange>({ start: 0, end: Infinity });
+  const [rendering, setRendering] = createSignal(false);
 
   function newProject() {
     // TODO: implement actual new project dialog
@@ -57,8 +59,8 @@ export default function AppProvider(props: AppProvider) {
   return (
     <AppContext.Provider
       value={[
-        { videoElement, videoFile, mediaData, trim },
-        { setVideoElement, setVideoFile, setMediaData, setTrim },
+        { videoElement, videoFile, mediaData, rendering, trim },
+        { setVideoElement, setVideoFile, setMediaData, setRendering, setTrim },
       ]}
     >
       {props.children}

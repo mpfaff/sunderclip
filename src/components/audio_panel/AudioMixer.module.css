@@ -59,7 +59,7 @@
 
 .audio_mixer__btn {
   padding: 0.25em;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .audio_mixer__visualizer {
@@ -67,6 +67,7 @@
   background-image: linear-gradient(0deg, green 5%, rgb(0, 196, 0) 40%, yellow 60%, red 97%);
   border: 1px solid hsl(var(--clr-neutral-400));
   margin: 0.5em auto;
+  margin-top: 0.1em;
   min-width: 2em;
   position: relative;
   overflow: hidden;
