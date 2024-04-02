@@ -1,6 +1,6 @@
 .bar {
   position: relative;
-  height: 1em;
+  height: 1.5em;
   width: 100%;
   border: 1px solid hsl(var(--clr-neutral-300));
   border-radius: 3px;
@@ -33,6 +33,17 @@
     rgba(255, 255, 255, 0.1) 80%,
     transparent 100%
   );
+}
+
+.bar__text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.7);
+  font-size: 0.95rem;
+  text-align: center;
+  z-index: 1;
 }
 
 @keyframes glint {

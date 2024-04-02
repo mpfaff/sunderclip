@@ -18,18 +18,24 @@
 .export__btns {
   margin-top: auto;
   display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-  width: 100%;
-}
-
-.export__btns_row {
-  display: flex;
   justify-content: flex-end;
+  gap: 0.25em;
+  width: 100%;
 }
 
 .export_btn {
   font-size: 0.9rem;
-  padding: 0.2em 0.4em;
+  padding: 0.3em 0.5em;
+  border: 1px solid hsl(var(--clr-neutral-300));
   background-color: hsl(var(--clr-neutral-200));
+  border-radius: 0;
+  border-radius: 2px;
+}
+
+.export_btn:hover {
+  background-color: hsl(var(--clr-neutral-300));
+}
+
+.export_btn:last-child {
+  margin-left: auto;
 }

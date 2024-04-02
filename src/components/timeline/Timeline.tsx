@@ -183,7 +183,7 @@ export default function Timeline() {
               <div
                 class={`${styles.timeline__cursor} ${styles.timeline__playhead}`}
                 onPointerDown={handleCursorDown}
-                style={`margin-left: ${cursorPos() * 100}%`}
+                style={`left: ${cursorPos() * 100}%`}
                 ref={(ref) => (cursorRef = ref)}
               ></div>
             </div>
@@ -191,14 +191,14 @@ export default function Timeline() {
               id="trimhead-start"
               class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_start}`}
               ref={(ref) => (trimheadStartRef = ref)}
-              style={`margin-left: ${trimPos.start * 100}%`}
+              style={`left: ${trimPos.start * 100}%`}
               onPointerDown={handleTrimheadDown}
             ></div>
             <div
               id="trimhead-end"
               class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_end}`}
               ref={(ref) => (trimheadEndRef = ref)}
-              style={`margin-left: ${trimPos.end * 100}%`}
+              style={`left: ${trimPos.end * 100}%`}
               onPointerDown={handleTrimheadDown}
             ></div>
           </div>

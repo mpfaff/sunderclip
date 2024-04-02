@@ -18,12 +18,13 @@ export default function LoadingBar({
 }) {
   return (
     <div class={styles.bar}>
+      <span class={styles.bar__text}>{value()}%</span>
       <div
         class={styles.bar__progress}
         style={`--progress: ${value()}%; --origin: ${scaleOrigin || "left"}; --fill: ${fillColor}`}
         role="meter"
         aria-label={name}
-        aria-valuenow={`${value()}%`}
+        aria-valuenow={value()}
         aria-valuemax={max}
         aria-valuemin={min}
       ></div>

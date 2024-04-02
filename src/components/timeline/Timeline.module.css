@@ -56,7 +56,8 @@
   z-index: 2;
 }
 
-.timeline__cursor:active {
+.timeline__cursor:active,
+.timeline__cursor:hover {
   cursor: w-resize;
 }
 
@@ -107,7 +108,7 @@
   transform: translate(-50%, -50%);
   width: 50%;
   height: 70%;
-  background-image: repeating-linear-gradient(90deg, transparent 0px 3px, hsl(var(--clr-primary-700)) 3px 4px, transparent 50%);
+  background-image: repeating-linear-gradient(90deg, transparent 0px 3px, hsl(var(--clr-primary-700)) 3px 4px, transparent calc(50% - 1px));
 }
 
 .timeline__trim_start {

@@ -1,8 +1,9 @@
 import { ComponentProps, createContext, createSignal, onCleanup, onMount, useContext } from "solid-js";
-import { MediaData, TrimRange } from "../../types";
 import { createStore } from "solid-js/store";
-import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
+
+import Menubar from "../classes/Menubar";
+import { MediaData, TrimRange } from "../../types";
 
 function createAppContext() {
   const [videoElement, setVideoElement] = createSignal<HTMLVideoElement | undefined>();
@@ -48,11 +49,15 @@ export default function AppProvider(props: AppProvider) {
   }
 
   onMount(async () => {
-    await listen("new_proj", newProject);
+    await Menubar.init();
+    Menubar.addEventListener("new_proj", newProject);
+    Menubar.addEventListener("prefs", () => console.log("Preferences"));
+
     window.addEventListener("keydown", toggleFullscreen);
   });
 
   onCleanup(() => {
+    Menubar.cleanup();
     window.removeEventListener("keydown", toggleFullscreen);
   });
 

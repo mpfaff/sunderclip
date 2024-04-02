@@ -91,9 +91,19 @@ button:hover {
   background-color: hsl(var(--clr-primary-500));
 }
 
+button:disabled {
+  opacity: 0.7;
+}
+
 input:focus-visible,
 button:focus-visible {
   outline: 2px solid hsl(var(--clr-primary-800));
+}
+
+hr {
+  height: 1px;
+  background-color: hsl(var(--clr-neutral-200));
+  border: none;
 }
 
 @media (prefers-color-scheme: light) {
