@@ -1,12 +1,17 @@
 import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
 
+export type MenubarBtnOption = (typeof MENUBAR_BTN_OPTS)[number];
+export const MENUBAR_BTN_OPTS = ["zoom_in", "zoom_out", "prefs", "new_proj"] as const;
+
 class Menubar {
   private unlisteners: UnlistenFn[] = new Array(MENUBAR_BTN_OPTS.length);
   private listeners: Map<MenubarBtnOption, Set<Function>> = new Map();
 
+  constructor() {}
+
   async init() {
     for (let i = 0; i < MENUBAR_BTN_OPTS.length; i++) {
-      const unlisten = await listen(MENUBAR_BTN_OPTS[i], this.handle);
+      const unlisten = await listen(MENUBAR_BTN_OPTS[i], (data) => this.handle(data)); // Cannot pass this.handle directly due to goofy JS
       this.unlisteners[i] = unlisten;
     }
   }
@@ -38,6 +43,4 @@ class Menubar {
   }
 }
 
-export type MenubarBtnOption = (typeof MENUBAR_BTN_OPTS)[number];
-export const MENUBAR_BTN_OPTS = ["zoom_in", "zoom_out", "prefs", "new_proj"] as const;
 export default new Menubar();

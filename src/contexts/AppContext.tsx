@@ -54,6 +54,8 @@ export default function AppProvider(props: AppProvider) {
     Menubar.addEventListener("prefs", () => console.log("Preferences"));
 
     window.addEventListener("keydown", toggleFullscreen);
+
+    await invoke("close_splashscreen");
   });
 
   onCleanup(() => {
