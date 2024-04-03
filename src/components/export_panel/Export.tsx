@@ -36,7 +36,7 @@ export default function Export() {
 
       <form action="#" class={styles.export__form}>
         <fieldset class={styles.export__fieldset}>
-          <div class={styles.export__dataGroup}>
+          <div class={styles.export__inputGroup}>
             <label for="location">Location</label>
             <input
               type="button"
@@ -50,7 +50,7 @@ export default function Export() {
               }}
             />
           </div>
-          <div class={styles.export__dataGroup}>
+          <div class={styles.export__inputGroup}>
             <label for="filename">File Name</label>
             <input
               type="text"
@@ -68,54 +68,58 @@ export default function Export() {
           </p>
         </fieldset>
         <fieldset class={styles.export__fieldset}>
-          <div class={styles.export__dataGroup}>
-            <label for="video-codec">Video Codec</label>
-            <select name="video-codec" id="video-codec"></select>
-          </div>
-
-          <div class={styles.export__dataGroup}>
-            <label for="audio-codec">Audio Codec</label>
-            <select name="audio-codec" id="audio-codec"></select>
-          </div>
-
-          <div class={styles.export__dataGroup}>
-            <label for="resolution">Resolution</label>
-            <input type="number" name="width" id="width" value={mediaData()?.width} required />
-            <label for="height">Height</label>
-            <input type="number" name="height" id="height" value={mediaData()?.height} required />
-            <label for="lock-aspect">Lock Aspect Ratio?</label>
-            <input type="checkbox" name="lock-aspect" id="lock-aspect" checked />
-          </div>
-          <div class={styles.export__dataGroup}>
-            <label for="fps">Frame Rate</label>
-            <input type="number" name="fps" id="fps" value={mediaData()?.fps} required />
+          <div class={`${styles.export__group} ${styles.export__video}`}>
+            <div class={styles.export__inputGroup} style={{ "grid-area": "x-res" }}>
+              <label for="resolution">Width</label>
+              <input type="number" name="width" id="width" value={mediaData()?.width} required />
+            </div>
+            <div class={styles.export__inputGroup} style={{ "grid-area": "y-res" }}>
+              <label for="height">Height</label>
+              <input type="number" name="height" id="height" value={mediaData()?.height} required />
+            </div>
+            <div class={styles.export__inputGroup} style={{ "grid-area": "lock" }}>
+              <label for="lock-aspect">Lock Ratio</label>
+              <input type="checkbox" name="lock-aspect" id="lock-aspect" checked />
+            </div>
+            <div class={styles.export__inputGroup} style={{ "grid-area": "fps" }}>
+              <label for="fps">Frame Rate</label>
+              <input type="number" name="fps" id="fps" value={mediaData()?.fps} required />
+            </div>
+            <div class={styles.export__inputGroup} style={{ "grid-area": "v-codec" }}>
+              <label for="video-codec">Video Codec</label>
+              <select name="video-codec" id="video-codec"></select>
+            </div>
+            <div class={styles.export__inputGroup} style={{ "grid-area": "a-codec" }}>
+              <label for="audio-codec">Audio Codec</label>
+              <select name="audio-codec" id="audio-codec"></select>
+            </div>
           </div>
         </fieldset>
         <fieldset class={styles.export__fieldset}>
-          <div class={styles.export__dataGroup}>
+          <div class={styles.export__inputGroup}>
             <label for="target-bitrate">Target Bitrate</label>
             <input type="number" name="target-bitrate" id="target-bitrate" />
           </div>
-          <div class={styles.export__dataGroup}>
+          <div class={styles.export__inputGroup}>
             <label for="rate-control">Rate control</label>
             <select name="rate-control" id="rate-control">
               <option value="cbr">CBR (constant bitrate)</option>
               <option value="vbr">VBR (variable bitrate)</option>
             </select>
           </div>
-          <div class={styles.export__dataGroup}>
+          <div class={styles.export__inputGroup}>
             <label for="limit-size">Limit Size?</label>
             <input type="checkbox" name="limit-size" id="limit-size" />
           </div>
-          <div class={styles.export__dataGroup}>
+          <div class={styles.export__inputGroup}>
             <label for="max-size">Max File Size</label>
             <input type="number" name="max-size" id="max-size" />
           </div>
-          <div class={styles.export__dataGroup}>
+          <div class={styles.export__inputGroup}>
             <label for="max-attempts">Max attempts</label>
             <input type="number" name="max-attempts" id="max-attempts" value="3" />
           </div>
-          <div class={styles.export__dataGroup}>
+          <div class={styles.export__inputGroup}>
             <label for="retry-threshold">Retry Threshold</label>
             <input type="number" name="retry-threshold" id="retry-threshold" value="0.1" />
           </div>
