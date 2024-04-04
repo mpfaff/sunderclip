@@ -200,6 +200,7 @@ fn main() {
             commands::ffprobe_cmd::ffprobe_cmd,
             commands::toggle_fullscreen::toggle_fullscreen,
             commands::get_encoders::get_encoders,
+            commands::get_hwaccels::get_hwaccels,
             commands::render::render
         ])
         .run(tauri::generate_context!())

@@ -10,11 +10,11 @@ use crate::FFMPEG_PATH;
 use super::CREATE_NO_WINDOW;
 
 #[tauri::command]
-pub async fn get_encoders() -> Result<Vec<String>, String> {
-    let mut encoders = Vec::new();
+pub async fn get_hwaccels() -> Result<Vec<String>, String> {
+    let mut hwAccelerators = Vec::new();
 
     let command = Command::new(FFMPEG_PATH.get().unwrap())
-        .args(["-hide_banner", "-encoders"])
+        .args(["-hide_banner", "-hwaccels"])
         .creation_flags(CREATE_NO_WINDOW)
         .stdout(Stdio::piped())
         .spawn()
@@ -29,7 +29,7 @@ pub async fn get_encoders() -> Result<Vec<String>, String> {
         .map_err(|e| e.to_string())?
         != 0
     {
-        if line_buf.ends_with(b"-\r\n") || line_buf.ends_with(b"-\n") {
+        if line_buf.ends_with(b":\r\n") || line_buf.ends_with(b":\n") {
             line_buf.clear();
             break;
         }
@@ -43,14 +43,9 @@ pub async fn get_encoders() -> Result<Vec<String>, String> {
         != 0
     {
         let line = std::str::from_utf8(&line_buf).map_err(|e| e.to_string())?;
-        encoders.push(
-            line.split(' ')
-                .nth(2)
-                .ok_or_else(|| format!("Invalid output from FFMPEG: {}", line))?
-                .to_owned(),
-        );
+        hwAccelerators.push(line.trim().to_owned());
         line_buf.clear();
     }
 
-    Ok(encoders)
+    Ok(hwAccelerators)
 }

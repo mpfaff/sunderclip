@@ -175,45 +175,6 @@ export type TrimRange = {
   end: number;
 };
 
-export const VideoCodecs = {
-  h264: {
-    container: "mp4",
-    cpu: "libx264",
-    hwPrefix: "h264",
-  },
-
-  h265: {
-    container: "mp4",
-    cpu: "libx265",
-    hwPrefix: "h265",
-  },
-
-  av1: {
-    container: "mp4",
-    cpu: "libaom-av1",
-    hwPrefix: "av1",
-  },
-
-  gif: {
-    container: "gif",
-    cpu: "gif",
-    hwPrefix: null,
-  },
-
-  vp9: {
-    container: "webm",
-    cpu: "libvpx-vp9",
-    hwPrefix: "vp9",
-  },
-} as const;
-
-export const VideoCodecHwVendorSuffixes = {
-  nvidia: "nvenc",
-  amd: "amf",
-  intel: "qsv",
-  apple: "videotoolbox",
-} as const;
-
 export type ExportInfo = {
   filepath: string | null;
   filename: string | null;

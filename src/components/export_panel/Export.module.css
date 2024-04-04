@@ -49,7 +49,6 @@
   margin: 0;
 }
 
-/* Firefox */
 .export__video input[type="number"] {
   -moz-appearance: textfield;
 }
