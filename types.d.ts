@@ -2,6 +2,8 @@ export type MediaData = {
   [key: string];
 
   filename: string;
+  filepath: string;
+  fileExt: string;
   width: number;
   height: number;
   videoCodec: string;

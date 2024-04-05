@@ -8,6 +8,7 @@ import styles from "./MediaInfo.module.css";
 import { invoke } from "@tauri-apps/api/core";
 import { gcd, round } from "../../util";
 import { useAppContext } from "../../contexts/AppContext";
+import { path } from "@tauri-apps/api";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
@@ -41,8 +42,12 @@ export default function MediaInfo() {
       const aspectRatioGcd = gcd(videoStream.width, videoStream.height);
       const size = Number(json.format.size);
 
+      const fileExt = await path.extname(file);
+
       const data: MediaData = {
-        filename: file,
+        filepath: file,
+        filename: await path.basename(file, "." + fileExt),
+        fileExt,
         width: videoStream.width,
         height: videoStream.height,
         videoCodec: videoStream.codec_name,
@@ -113,7 +118,7 @@ export default function MediaInfo() {
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>File</span>
-                  <span class={styles.media_info__text}>{data.filename}</span>
+                  <span class={styles.media_info__text}>{data.filepath}</span>
                 </li>
               </>
             );

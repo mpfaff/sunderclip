@@ -83,7 +83,7 @@ const AudioCodecs = {
 } as const;
 
 export default function Export() {
-  const [{ mediaData, videoFile }, { setRendering }] = useAppContext();
+  const [{ mediaData }, { setRendering }] = useAppContext();
 
   const [exportInfo, setExportInfo] = createStore<ExportInfo>({
     filename: null,
@@ -154,7 +154,7 @@ export default function Export() {
               id="filename"
               required
               onInput={(e) => setExportInfo("filename", e.target.value)}
-              value={videoFile() || "[No video selected]"}
+              value={mediaData()?.filename || "[No video selected]"}
             />
           </div>
 
