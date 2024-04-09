@@ -1,3 +1,4 @@
+/* Fonts */
 @font-face {
   font-family: "Noto Sans";
   src: url("/fonts/NotoSans.ttf");
@@ -9,6 +10,7 @@
   src: url("/fonts/ChivoMono.ttf");
 }
 
+/* Universal styles */
 *,
 *::before,
 *::after {
@@ -18,7 +20,7 @@
 }
 
 :root {
-  font-size: 16px;
+  font-size: calc(16px * var(--zoom));
 
   --clr-neutral-100: 220, 14%, 12%;
   --clr-neutral-200: 220, 14%, 20%;
@@ -56,6 +58,7 @@
   font-family: var(--font-primary);
 }
 
+/* Common styles */
 html {
   scrollbar-color: dark;
 }
@@ -92,6 +95,10 @@ button:hover {
 }
 
 button:disabled {
+  opacity: 0.7;
+}
+
+fieldset:disabled {
   opacity: 0.7;
 }
 
@@ -132,6 +139,12 @@ input[type="button"]:hover,
 input[type="button"]:focus {
   background-color: hsl(var(--clr-neutral-300));
   cursor: pointer;
+}
+
+/* Util classes */
+.force-wrap {
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 @media (prefers-color-scheme: light) {

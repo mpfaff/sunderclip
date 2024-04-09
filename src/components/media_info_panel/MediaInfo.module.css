@@ -22,6 +22,4 @@
 
 .media_info__text:last-child {
   color: hsl(var(--clr-neutral-800));
-  word-break: break-all;
-  overflow-wrap: break-word;
 }

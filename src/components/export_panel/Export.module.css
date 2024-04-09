@@ -29,28 +29,28 @@
 .export__group {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25em;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.export__folder_text {
+  flex-grow: 1;
+  font-size: 0.8rem;
+  color: hsl(var(--clr-neutral-700));
 }
 
 .export__video {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  align-items: center;
   grid-template-areas:
     "x-res x-res lock lock fps fps"
     "y-res y-res lock lock fps fps"
     "v-codec v-codec v-codec a-codec a-codec a-codec";
 }
-
-.export__video input::-webkit-outer-spin-button,
-.export__video input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.export__video input[type="number"] {
-  -moz-appearance: textfield;
+.export__video input,
+.export__video select {
+  text-align: center;
 }
 
 .export__video label {
@@ -70,9 +70,18 @@
 
 .export__inputGroup input,
 .export__inputGroup select {
-  text-align: center;
   width: 100%;
   margin-bottom: 0.5em;
+}
+
+.export__inputGroup input::-webkit-outer-spin-button,
+.export__inputGroup input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.export__inputGroup input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .export__inputGroup input[type="button"] {
@@ -80,7 +89,29 @@
   padding: 0.3em 0.5em;
 }
 
-.export__inputGroup {
+.export__inputGroup input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-inline: auto;
+}
+
+.export__inputRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.5em;
+}
+
+.export__inputRow input {
+  margin-bottom: 0;
+}
+
+.export__location_text {
+  font-size: 0.85rem;
+  margin-top: 0.5em;
+}
+.export__location_text span {
+  color: hsl(var(--clr-neutral-700));
 }
 
 .export_btns {

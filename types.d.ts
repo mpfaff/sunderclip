@@ -1,3 +1,5 @@
+import { AudioCodec, VideoCodec } from "./src/components/export_panel/Codecs";
+
 export type MediaData = {
   [key: string];
 
@@ -177,19 +179,45 @@ export type TrimRange = {
   end: number;
 };
 
+export type RateControlType = "cbr" | "vbr" | "abr" | "crf";
+
 export type ExportInfo = {
   filepath: string | null;
+  fileExt: string | null;
   filename: string | null;
   absolutePath: string | null;
 
-  videoCodec: string | null;
-  audioCodec: string | null;
+  width: number | null;
+  height: number | null;
+  lockRatio: boolean;
+  fps: number | null;
+  videoCodec: VideoCodec | null;
+  audioCodec: AudioCodec | null;
 
   mergeAudioTracks: number[];
 
+  rateControl: RateControlType;
+  targetBitrate: number | null;
+  maxBitrate: number | null;
+  minBitrate: number | null;
+  crfValue: number | null;
+
   limitSize: boolean;
-  sizeLimitDetails: {
-    maxSize: number;
-    rateControl: "cbr" | "vbr";
-  };
+  sizeLimitDetails: RenderSizeLimit;
+};
+
+export type RenderSizeLimit = {
+  maxSize: number; // MB
+  maxAttempts: number;
+  retryThreshold: number;
+};
+
+export type RenderInfo = {
+  inputFilepath: string;
+  outputFilepath: string;
+  vCodec: string;
+  aCodec: string;
+  audioTracks: number[];
+  trimStart: number;
+  trimEnd: number;
 };

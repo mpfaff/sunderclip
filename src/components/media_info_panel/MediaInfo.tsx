@@ -80,45 +80,45 @@ export default function MediaInfo() {
               <>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>Width</span>
-                  <span class={styles.media_info__text}>{data.width}</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.width}</span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>Height</span>
-                  <span class={styles.media_info__text}>{data.height}</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.height}</span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>V-Codec</span>
-                  <span class={styles.media_info__text}>{data.videoCodec}</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.videoCodec}</span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>FPS</span>
-                  <span class={styles.media_info__text}>{data.fps}</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.fps}</span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>Total Streams</span>
-                  <span class={styles.media_info__text}>{data.streams.length}</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.streams.length}</span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>Aspect Ratio</span>
-                  <span class={styles.media_info__text}>
+                  <span class={`force-wrap ${styles.media_info__text}`}>
                     {data.aspectRatioX}:{data.aspectRatioY}
                   </span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>Duration</span>
-                  <span class={styles.media_info__text}>{data.duration}s</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.duration}s</span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>Size</span>
-                  <span class={styles.media_info__text}>{data.size_mb}MB</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.size_mb}MB</span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>Date Created</span>
-                  <span class={styles.media_info__text}>{data.dateCreated.getTime() ? dateFormatter.format(data.dateCreated) : "Unknown"}</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.dateCreated.getTime() ? dateFormatter.format(data.dateCreated) : "Unknown"}</span>
                 </li>
                 <li class={styles.media_info__item}>
                   <span class={styles.media_info__text}>File</span>
-                  <span class={styles.media_info__text}>{data.filepath}</span>
+                  <span class={`force-wrap ${styles.media_info__text}`}>{data.filepath}</span>
                 </li>
               </>
             );

@@ -8,6 +8,7 @@ import { usePlayerContext } from "../../contexts/PlayerContext";
 import { createStore } from "solid-js/store";
 import { TrimRange } from "../../../types";
 
+const capturingElements = new Set(["INPUT", "SELECT", "BUTTON"]);
 export default function Timeline() {
   const [{ videoElement, mediaData, trim }, { setTrim }] = useAppContext();
   const [{ currentTime, playing }, { setCurrentTime, setPlaying, video }] = usePlayerContext();
@@ -29,6 +30,13 @@ export default function Timeline() {
 
     switch (event.code) {
       case "Space": {
+        const focusedElement = document.activeElement;
+        if (
+          focusedElement != null &&
+          focusedElement instanceof HTMLElement &&
+          (capturingElements.has(focusedElement.tagName) || focusedElement.dataset["captureFocus"])
+        )
+          return;
         video.togglePlayback();
         break;
       }
