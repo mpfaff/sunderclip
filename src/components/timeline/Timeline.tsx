@@ -28,15 +28,16 @@ export default function Timeline() {
   function handleKeydown(event: KeyboardEvent) {
     if (dragging()) return;
 
+    const focusedElement = document.activeElement;
+    if (
+      focusedElement != null &&
+      focusedElement instanceof HTMLElement &&
+      (capturingElements.has(focusedElement.tagName) || focusedElement.dataset["captureFocus"])
+    )
+      return;
+
     switch (event.code) {
       case "Space": {
-        const focusedElement = document.activeElement;
-        if (
-          focusedElement != null &&
-          focusedElement instanceof HTMLElement &&
-          (capturingElements.has(focusedElement.tagName) || focusedElement.dataset["captureFocus"])
-        )
-          return;
         video.togglePlayback();
         break;
       }
@@ -148,6 +149,13 @@ export default function Timeline() {
     const duration = videoElement()!.duration;
 
     setCursorPos(!isNaN(duration) ? time / duration : 0);
+  });
+
+  createEffect(() => {
+    const duration = mediaData()?.duration;
+    if (duration == null) return;
+
+    setTrim("end", duration);
   });
 
   onMount(() => {

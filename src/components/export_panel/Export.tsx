@@ -4,13 +4,14 @@ import Panel from "../panel/Panel";
 
 import panelStyles from "../panel/PanelCommon.module.css";
 import styles from "./Export.module.css";
-import { open } from "@tauri-apps/plugin-dialog";
+import { ask, open } from "@tauri-apps/plugin-dialog";
 import { createStore } from "solid-js/store";
 import { path } from "@tauri-apps/api";
 import { invoke } from "@tauri-apps/api/core";
 
-import { ExportInfo, RateControlType } from "../../../types";
+import { ExportInfo, RateControlType, RenderInfo } from "../../../types";
 import { AudioCodec, AudioCodecs, VendorSuffix, VideoCodec, VideoCodecHwVendorSuffixes, VideoCodecs } from "./Codecs";
+import { exists } from "@tauri-apps/plugin-fs";
 
 type Codec<T> = {
   id: string; // FFMPEG encoder ID
@@ -18,7 +19,7 @@ type Codec<T> = {
 };
 
 export default function Export() {
-  const [{ mediaData }, { setRendering }] = useAppContext();
+  const [{ mediaData, videoFile }, {}, { render }] = useAppContext();
 
   const [exportInfo, setExportInfo] = createStore<ExportInfo>({
     filename: null,
@@ -31,6 +32,8 @@ export default function Export() {
     fps: null,
     videoCodec: "h264",
     audioCodec: "aac",
+    videoCodecId: Object.values(VideoCodecs)[0].cpu,
+    audioCodecId: Object.values(AudioCodecs)[0].id,
     limitSize: false,
     crfValue: null,
     targetBitrate: null,
@@ -46,16 +49,22 @@ export default function Export() {
     audio: [],
   });
 
+  let formRef: HTMLFormElement;
+
   createEffect(() => {
     // Set initial default values for new video
 
     if (mediaData() == null) return;
-    const { width, height, fps, filename } = mediaData()!;
+    const { width, height, fps, filename, streams } = mediaData()!;
 
     setExportInfo("width", width);
     setExportInfo("height", height);
     setExportInfo("fps", fps);
     setExportInfo("filename", filename);
+    setExportInfo(
+      "mergeAudioTracks",
+      streams.filter((stream) => stream.codec_type === "audio").map((stream) => stream.index)
+    );
   });
 
   createEffect(async () => {
@@ -78,7 +87,7 @@ export default function Export() {
 
   createEffect(() => {
     // Sync default CRF value
-    if (exportInfo.rateControl === "crf") setExportInfo("crfValue", VideoCodecs[exportInfo.videoCodec!].crf?.default!);
+    if (exportInfo.rateControl === "crf") setExportInfo("crfValue", VideoCodecs[exportInfo.videoCodec].crf?.default!);
   });
 
   onMount(async () => {
@@ -105,11 +114,40 @@ export default function Export() {
     }
   });
 
+  async function beginRender() {
+    if (!formRef.reportValidity()) return;
+
+    const settings: RenderInfo = {
+      aCodec: exportInfo.audioCodecId,
+      vCodec: exportInfo.videoCodecId,
+      inputFilepath: videoFile()!,
+      outputFilepath: exportInfo.absolutePath!,
+      audioTracks: exportInfo.mergeAudioTracks,
+    };
+
+    const fileExists = await exists(settings.outputFilepath);
+    if (fileExists)
+      if (
+        !(await ask("A file with the same name already exists at this location. Would you like to replace it?", {
+          title: "File Conflict",
+          kind: "info",
+          okLabel: "Replace",
+        }))
+      )
+        return;
+
+    console.log(settings, {
+      maxAttempts: exportInfo.sizeLimitDetails.maxAttempts,
+      maxSize: exportInfo.sizeLimitDetails.maxSize,
+      retryThreshold: exportInfo.sizeLimitDetails.retryThreshold,
+    });
+  }
+
   return (
     <Panel column class={styles.export}>
       <h2 class={panelStyles.heading}>Export Settings</h2>
 
-      <form action="#" class={styles.export__form}>
+      <form action="#" class={styles.export__form} ref={(ref) => (formRef = ref)}>
         <fieldset class={styles.export__fieldset}>
           <div class={styles.export__inputGroup}>
             <label for="location">Location</label>
@@ -190,13 +228,20 @@ export default function Export() {
             </div>
             <div class={styles.export__inputGroup} style={{ "grid-area": "v-codec" }}>
               <label for="video-codec">Video Codec</label>
-              <select name="video-codec" id="video-codec" onInput={(e) => setExportInfo("videoCodec", e.target.value as VideoCodec)}>
+              <select
+                name="video-codec"
+                id="video-codec"
+                onInput={(e) => {
+                  setExportInfo("videoCodec", e.target.value as VideoCodec);
+                  setExportInfo("videoCodecId", e.target.dataset["codecId"]!);
+                }}
+              >
                 <For each={supportedCodecs.video}>
                   {(codec) => {
                     const encoder = VideoCodecs[codec.name];
 
                     return (
-                      <option value={codec.name}>
+                      <option value={codec.name} data-codec-id={codec.id}>
                         {`${encoder.friendlyName} (${
                           encoder.hwPrefix != null && codec.id.startsWith(encoder.hwPrefix!)
                             ? `GPU ${VideoCodecHwVendorSuffixes[codec.id.slice(encoder.hwPrefix.length + 1) as VendorSuffix]}`
@@ -210,8 +255,21 @@ export default function Export() {
             </div>
             <div class={styles.export__inputGroup} style={{ "grid-area": "a-codec" }}>
               <label for="audio-codec">Audio Codec</label>
-              <select name="audio-codec" id="audio-codec" onInput={(e) => setExportInfo("audioCodec", e.target.value as AudioCodec)}>
-                <For each={supportedCodecs.audio}>{(codec) => <option value={codec.name}>{AudioCodecs[codec.name].friendlyName}</option>}</For>
+              <select
+                name="audio-codec"
+                id="audio-codec"
+                onInput={(e) => {
+                  setExportInfo("audioCodec", e.target.value as AudioCodec);
+                  setExportInfo("audioCodecId", e.target.dataset["codecId"]!);
+                }}
+              >
+                <For each={supportedCodecs.audio}>
+                  {(codec) => (
+                    <option value={codec.name} data-codec-id={codec.id}>
+                      {AudioCodecs[codec.name].friendlyName}
+                    </option>
+                  )}
+                </For>
               </select>
             </div>
           </div>
@@ -230,17 +288,23 @@ export default function Export() {
             <Show when={exportInfo.rateControl.endsWith("br")}>
               <div class={styles.export__inputGroup}>
                 <label for="target-bitrate">Target Bitrate (Kbps)</label>
-                <input type="number" name="target-bitrate" id="target-bitrate" onInput={(e) => setExportInfo("targetBitrate", e.target.valueAsNumber)} />
+                <input
+                  type="number"
+                  name="target-bitrate"
+                  id="target-bitrate"
+                  onInput={(e) => setExportInfo("targetBitrate", e.target.valueAsNumber)}
+                  required
+                />
               </div>
             </Show>
-            <Show when={exportInfo.rateControl === "vbr" && VideoCodecs[exportInfo.videoCodec!].rateControl["vbr"] != null}>
+            <Show when={exportInfo.rateControl === "vbr" && VideoCodecs[exportInfo.videoCodec].rateControl["vbr"] != null}>
               <div class={styles.export__inputGroup}>
                 <label for="min-bitrate">Min Bitrate (Kbps)</label>
-                <input type="number" name="min-bitrate" id="min-bitrate" onInput={(e) => setExportInfo("minBitrate", e.target.valueAsNumber)} />
+                <input type="number" name="min-bitrate" id="min-bitrate" onInput={(e) => setExportInfo("minBitrate", e.target.valueAsNumber)} required />
               </div>
               <div class={styles.export__inputGroup}>
                 <label for="max-bitrate">Max Bitrate (Kbps)</label>
-                <input type="number" name="max-bitrate" id="max-bitrate" onInput={(e) => setExportInfo("maxBitrate", e.target.valueAsNumber)} />
+                <input type="number" name="max-bitrate" id="max-bitrate" onInput={(e) => setExportInfo("maxBitrate", e.target.valueAsNumber)} required />
               </div>
             </Show>
             <Show when={exportInfo.rateControl === "crf"}>
@@ -250,13 +314,42 @@ export default function Export() {
                   type="range"
                   name="crf-value"
                   id="crf-value"
-                  min={VideoCodecs[exportInfo.videoCodec!].crf!.min}
-                  max={VideoCodecs[exportInfo.videoCodec!].crf!.max}
+                  min={VideoCodecs[exportInfo.videoCodec].crf!.min}
+                  max={VideoCodecs[exportInfo.videoCodec].crf!.max}
                   value={exportInfo.crfValue || ""}
                   onInput={(e) => setExportInfo("crfValue", e.target.valueAsNumber)}
                 />
               </div>
             </Show>
+          </div>
+        </fieldset>
+        <fieldset class={styles.export__fieldset}>
+          <div class={styles.export__group}>
+            <p style={{ width: "100%" }}>Merge Audio Tracks</p>
+            <For each={mediaData()?.streams.filter((stream) => stream.codec_type === "audio")}>
+              {(stream) => {
+                const id = `audio-track-${stream.index}`;
+
+                return (
+                  <>
+                    <label for={id}>{stream.index}</label>
+                    <input
+                      type="checkbox"
+                      name={id}
+                      id={id}
+                      checked
+                      onInput={(e) =>
+                        setExportInfo("mergeAudioTracks", (tracks) => {
+                          if (e.target.checked) tracks.push(stream.index);
+                          else tracks = tracks.filter((trackIndex) => trackIndex != stream.index);
+                          return tracks;
+                        })
+                      }
+                    />
+                  </>
+                );
+              }}
+            </For>
           </div>
         </fieldset>
         <div class={styles.export__inputGroup} style={{ "margin-top": "0.5em" }}>
@@ -282,14 +375,23 @@ export default function Export() {
               <input type="number" name="max-attempts" id="max-attempts" value={exportInfo.sizeLimitDetails.maxAttempts} required />
             </div>
             <div class={styles.export__inputGroup}>
-              <label for="retry-threshold">Retry Threshold</label>
-              <input type="number" name="retry-threshold" id="retry-threshold" value={exportInfo.sizeLimitDetails.retryThreshold} required />
+              <label for="retry-threshold">Retry Threshold (%)</label>
+              <input
+                type="number"
+                name="retry-threshold"
+                id="retry-threshold"
+                value={exportInfo.sizeLimitDetails.retryThreshold}
+                required
+                min="0"
+                max="1"
+                step="0.01"
+              />
             </div>
           </div>
         </fieldset>
       </form>
       <div class={styles.export_btns}>
-        <button class={styles.export__btn} onClick={() => setRendering(true)}>
+        <button class={styles.export__btn} onClick={beginRender}>
           Export
         </button>
       </div>

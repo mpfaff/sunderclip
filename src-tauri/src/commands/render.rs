@@ -30,6 +30,7 @@ pub async fn render(
 
     command.args([
         "-i",
+        "-y",
         input_filepath,
         "-c:v",
         v_codec,

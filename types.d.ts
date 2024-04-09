@@ -191,8 +191,10 @@ export type ExportInfo = {
   height: number | null;
   lockRatio: boolean;
   fps: number | null;
-  videoCodec: VideoCodec | null;
-  audioCodec: AudioCodec | null;
+  videoCodec: VideoCodec;
+  audioCodec: AudioCodec;
+  videoCodecId: string;
+  audioCodecId: string;
 
   mergeAudioTracks: number[];
 
@@ -215,9 +217,19 @@ export type RenderSizeLimit = {
 export type RenderInfo = {
   inputFilepath: string;
   outputFilepath: string;
+  // width: number;
+  // height: number;
+  // fps: number;
   vCodec: string;
   aCodec: string;
   audioTracks: number[];
+};
+
+export type RenderSettings = {
   trimStart: number;
   trimEnd: number;
+} & RenderInfo;
+
+export type ProgressData = {
+  percentage: number;
 };

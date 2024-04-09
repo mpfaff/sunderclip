@@ -1,16 +1,18 @@
 import { invoke } from "@tauri-apps/api/core";
-import { RenderInfo, RenderSizeLimit } from "../../types";
+import { ProgressData, RenderInfo, RenderSettings, RenderSizeLimit } from "../../types";
 import { stat } from "@tauri-apps/plugin-fs";
 import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
 
 export default class Renderer {
-  private settings: RenderInfo;
+  private settings: RenderSettings & { codecRateControl: string[] };
   private sizeLimit: RenderSizeLimit;
   private progressUnlistener: UnlistenFn | undefined;
   private listeners: Set<Function> = new Set();
 
-  constructor(settings: RenderInfo, sizeLimit: RenderSizeLimit) {
-    this.settings = settings;
+  constructor(settings: RenderSettings, sizeLimit: RenderSizeLimit) {
+    const rateControlCommand: string[] = [];
+
+    this.settings = { ...settings, codecRateControl: rateControlCommand };
     this.sizeLimit = sizeLimit;
   }
 
@@ -25,11 +27,11 @@ export default class Renderer {
     }
   }
 
-  addProgressListener(callback: Function) {
+  addProgressListener(callback: (data: ProgressData) => void) {
     this.listeners.add(callback);
   }
 
-  removeProgressListener(callback: Function) {
+  removeProgressListener(callback: (data: ProgressData) => void) {
     this.listeners.delete(callback);
   }
 

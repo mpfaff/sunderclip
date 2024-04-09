@@ -83,7 +83,20 @@ export default function AppProvider(props: AppProvider) {
   }
 
   async function render(settings: RenderInfo, sizeLimit: RenderSizeLimit) {
-    const renderer = new Renderer(settings, sizeLimit);
+    const renderer = new Renderer(
+      {
+        ...settings,
+        trimStart: trim.start,
+        trimEnd: trim.end,
+      },
+      sizeLimit
+    );
+
+    await renderer.init();
+
+    renderer.addProgressListener((data) => {
+      console.log(data);
+    });
 
     setRendering(true);
     await renderer.render();
