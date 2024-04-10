@@ -19,8 +19,8 @@ pub async fn render(
     window: Window,
     input_filepath: &str,
     output_filepath: &str,
-    v_codec: &str,
-    a_codec: &str,
+    v_codec_id: &str,
+    a_codec_id: &str,
     audio_tracks: Vec<u32>,
     codec_rate_control: Vec<&str>,
     trim_start: f64,
@@ -30,16 +30,17 @@ pub async fn render(
 
     command.args([
         "-i",
-        "-y",
         input_filepath,
         "-c:v",
-        v_codec,
+        v_codec_id,
         "-c:a",
-        a_codec,
+        a_codec_id,
         "-ss",
         trim_start.to_string().as_str(),
         "-t",
         trim_end.to_string().as_str(),
+        "-map",
+        "0:v",
     ]);
 
     for i in &audio_tracks {
@@ -48,7 +49,8 @@ pub async fn render(
     }
 
     command.args(codec_rate_control);
-    command.args(["-progress", "pipe:1", output_filepath]);
+    command.args(["-progress", "pipe:1"]);
+    command.arg(output_filepath);
 
     let child = command
         .creation_flags(CREATE_NO_WINDOW)

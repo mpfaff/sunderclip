@@ -8,6 +8,8 @@
 .timeline__info {
   padding: 0.5em;
   border-right: 1px solid hsl(var(--clr-neutral-200));
+  display: flex;
+  flex-direction: column;
 }
 
 .timeline__timecode {
@@ -16,6 +18,17 @@
   color: hsl(var(--clr-primary-900));
   text-align: right;
   font-family: var(--font-monospace);
+  margin-bottom: 0.25em;
+}
+
+.timeline__timecodeType {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-end;
+}
+
+.timeline__timecodeType label {
+  color: hsl(var(--clr-neutral-800));
 }
 
 .timeline__controls {

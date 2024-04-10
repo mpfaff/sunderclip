@@ -98,7 +98,7 @@ export default function AppProvider(props: AppProvider) {
       console.log(data);
     });
 
-    setRendering(true);
+    // setRendering(true);
     await renderer.render();
 
     renderer.cleanup();

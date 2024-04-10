@@ -220,8 +220,16 @@ export type RenderInfo = {
   // width: number;
   // height: number;
   // fps: number;
-  vCodec: string;
-  aCodec: string;
+  rateControl: RateControlType;
+  targetBitrate: number;
+  maxBitrate: number;
+  minBitrate: number;
+  crfValue: number;
+
+  vCodecName: VideoCodec;
+  aCodecName: AudioCodec;
+  vCodecId: string;
+  aCodecId: string;
   audioTracks: number[];
 };
 

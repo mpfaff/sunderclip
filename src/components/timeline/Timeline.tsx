@@ -17,13 +17,9 @@ export default function Timeline() {
   const [trimDragging, setTrimDragging] = createStore<{ start: boolean; end: boolean; any: boolean }>({ start: false, end: false, any: false });
   const [cursorPos, setCursorPos] = createSignal(0);
   const [trimPos, setTrimPos] = createStore<TrimRange>({ start: 0, end: 1 });
-  const [timecodeType, setTimecodeType] = createSignal<"frames" | "time">("time");
+  const [timecodeType, setTimecodeType] = createSignal<"frames" | "time">("frames");
 
-  let cursorRef: HTMLDivElement;
-  let timelineContainerRef: HTMLDivElement;
   let timelineBar: HTMLDivElement;
-  let trimheadStartRef: HTMLDivElement;
-  let trimheadEndRef: HTMLDivElement;
 
   function handleKeydown(event: KeyboardEvent) {
     if (dragging()) return;
@@ -125,7 +121,6 @@ export default function Timeline() {
     if (!trimDragging.any) return;
 
     const trimStart = trimDragging.start;
-    const trimhead = trimStart ? trimheadStartRef : trimheadEndRef;
     const trimheadName = trimStart ? "start" : "end";
 
     const timelineBarRect = timelineBar.getBoundingClientRect();
@@ -175,45 +170,35 @@ export default function Timeline() {
   return (
     <Panel class={styles.timeline}>
       <div class={styles.timeline__info}>
-        <p class={styles.timeline__timecode} contenteditable>
-          {formatSeconds(currentTime(), timecodeType() === "frames" ? mediaData()?.fps || 1 : undefined)}
-        </p>
-        <p>
-          {round(trim.start)}s to {round(trim.end)}s
-        </p>
-        <p>
-          {round(trimPos.start * 100)}% to {round(trimPos.end * 100)}%
-        </p>
+        <p class={styles.timeline__timecode}>{formatSeconds(currentTime(), timecodeType() === "frames" ? mediaData()?.fps || 1 : undefined)}</p>
+
+        <div class={styles.timeline__timecodeType}>
+          <label for="timecode">Timecode style</label>
+          <select name="timecode" id="timecode" onInput={(e) => setTimecodeType(e.target.value === "ms" ? "time" : "frames")}>
+            <option value="fps">Frames</option>
+            <option value="ms">Milliseconds</option>
+          </select>
+        </div>
       </div>
       <div class={styles.timeline__controls}>
         <div class={styles.timeline__container}>
           <div class={styles.timeline__bar} ref={(ref) => (timelineBar = ref)}>
-            <div
-              class={styles.timeline__scrollbar}
-              ref={(ref) => (timelineContainerRef = ref)}
-              tabIndex={0}
-              role="slider"
-              aria-label="Seek slider"
-              onPointerDown={handleCursorDown}
-            >
+            <div class={styles.timeline__scrollbar} tabIndex={0} role="slider" aria-label="Seek slider" onPointerDown={handleCursorDown}>
               <div
                 class={`${styles.timeline__cursor} ${styles.timeline__playhead}`}
                 onPointerDown={handleCursorDown}
                 style={`left: ${cursorPos() * 100}%`}
-                ref={(ref) => (cursorRef = ref)}
               ></div>
             </div>
             <div
               id="trimhead-start"
               class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_start}`}
-              ref={(ref) => (trimheadStartRef = ref)}
               style={`left: ${trimPos.start * 100}%`}
               onPointerDown={handleTrimheadDown}
             ></div>
             <div
               id="trimhead-end"
               class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_end}`}
-              ref={(ref) => (trimheadEndRef = ref)}
               style={`left: ${trimPos.end * 100}%`}
               onPointerDown={handleTrimheadDown}
             ></div>

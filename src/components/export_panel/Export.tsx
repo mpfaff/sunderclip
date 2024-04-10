@@ -118,8 +118,15 @@ export default function Export() {
     if (!formRef.reportValidity()) return;
 
     const settings: RenderInfo = {
-      aCodec: exportInfo.audioCodecId,
-      vCodec: exportInfo.videoCodecId,
+      aCodecId: exportInfo.audioCodecId,
+      vCodecId: exportInfo.videoCodecId,
+      vCodecName: exportInfo.videoCodec,
+      aCodecName: exportInfo.audioCodec,
+      rateControl: exportInfo.rateControl,
+      targetBitrate: exportInfo.targetBitrate!,
+      crfValue: exportInfo.crfValue!,
+      maxBitrate: exportInfo.maxBitrate!,
+      minBitrate: exportInfo.minBitrate!,
       inputFilepath: videoFile()!,
       outputFilepath: exportInfo.absolutePath!,
       audioTracks: exportInfo.mergeAudioTracks,
@@ -136,7 +143,7 @@ export default function Export() {
       )
         return;
 
-    console.log(settings, {
+    render(settings, {
       maxAttempts: exportInfo.sizeLimitDetails.maxAttempts,
       maxSize: exportInfo.sizeLimitDetails.maxSize,
       retryThreshold: exportInfo.sizeLimitDetails.retryThreshold,
@@ -233,7 +240,7 @@ export default function Export() {
                 id="video-codec"
                 onInput={(e) => {
                   setExportInfo("videoCodec", e.target.value as VideoCodec);
-                  setExportInfo("videoCodecId", e.target.dataset["codecId"]!);
+                  setExportInfo("videoCodecId", e.target.options[e.target.selectedIndex].dataset["codecId"]!);
                 }}
               >
                 <For each={supportedCodecs.video}>
@@ -260,7 +267,7 @@ export default function Export() {
                 id="audio-codec"
                 onInput={(e) => {
                   setExportInfo("audioCodec", e.target.value as AudioCodec);
-                  setExportInfo("audioCodecId", e.target.dataset["codecId"]!);
+                  setExportInfo("audioCodecId", e.target.options[e.target.selectedIndex].dataset["codecId"]!);
                 }}
               >
                 <For each={supportedCodecs.audio}>
@@ -279,10 +286,18 @@ export default function Export() {
             <div class={styles.export__inputGroup}>
               <label for="rate-control">Rate control</label>
               <select name="rate-control" id="rate-control" onInput={(e) => setExportInfo("rateControl", e.target.value as RateControlType)}>
-                <option value="cbr">CBR (constant bitrate)</option>
-                <option value="vbr">VBR (variable bitrate)</option>
-                <option value="abr">ABR (average bitrate)</option>
-                <option value="crf">CRF (quality control)</option>
+                <option value="cbr" disabled={VideoCodecs[exportInfo.videoCodec].rateControl["cbr"] == null}>
+                  CBR (constant bitrate)
+                </option>
+                <option value="vbr" disabled={VideoCodecs[exportInfo.videoCodec].rateControl["vbr"] == null}>
+                  VBR (variable bitrate)
+                </option>
+                <option value="abr" disabled={VideoCodecs[exportInfo.videoCodec].rateControl["abr"] == null}>
+                  ABR (average bitrate)
+                </option>
+                <option value="crf" disabled={VideoCodecs[exportInfo.videoCodec].rateControl["crf"] == null}>
+                  CRF (quality control)
+                </option>
               </select>
             </div>
             <Show when={exportInfo.rateControl.endsWith("br")}>
@@ -294,17 +309,32 @@ export default function Export() {
                   id="target-bitrate"
                   onInput={(e) => setExportInfo("targetBitrate", e.target.valueAsNumber)}
                   required
+                  disabled={exportInfo.limitSize}
                 />
               </div>
             </Show>
             <Show when={exportInfo.rateControl === "vbr" && VideoCodecs[exportInfo.videoCodec].rateControl["vbr"] != null}>
               <div class={styles.export__inputGroup}>
                 <label for="min-bitrate">Min Bitrate (Kbps)</label>
-                <input type="number" name="min-bitrate" id="min-bitrate" onInput={(e) => setExportInfo("minBitrate", e.target.valueAsNumber)} required />
+                <input
+                  type="number"
+                  name="min-bitrate"
+                  id="min-bitrate"
+                  onInput={(e) => setExportInfo("minBitrate", e.target.valueAsNumber)}
+                  required
+                  disabled={exportInfo.limitSize}
+                />
               </div>
               <div class={styles.export__inputGroup}>
                 <label for="max-bitrate">Max Bitrate (Kbps)</label>
-                <input type="number" name="max-bitrate" id="max-bitrate" onInput={(e) => setExportInfo("maxBitrate", e.target.valueAsNumber)} required />
+                <input
+                  type="number"
+                  name="max-bitrate"
+                  id="max-bitrate"
+                  onInput={(e) => setExportInfo("maxBitrate", e.target.valueAsNumber)}
+                  required
+                  disabled={exportInfo.limitSize}
+                />
               </div>
             </Show>
             <Show when={exportInfo.rateControl === "crf"}>
@@ -318,6 +348,7 @@ export default function Export() {
                   max={VideoCodecs[exportInfo.videoCodec].crf!.max}
                   value={exportInfo.crfValue || ""}
                   onInput={(e) => setExportInfo("crfValue", e.target.valueAsNumber)}
+                  disabled={exportInfo.limitSize}
                 />
               </div>
             </Show>

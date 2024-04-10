@@ -6,8 +6,19 @@ export const VideoCodecs = {
     hwPrefix: "h264",
     friendlyName: "H.264",
     rateControl: {
-      cbr: ["-x264-params", `"nal-hrd=cbr"`, "-b:v", "TARGET_BITRATE", "-minrate", "MIN_BITRATE", "-maxrate", "MAX_BITRATE", "-bufsize", "BUF_SIZE"],
-      abr: ["-b:v", "TARGET_BITRATE"],
+      cbr: [
+        "-x264-params",
+        `"nal-hrd=cbr"`,
+        "-b:v",
+        "{TARGET_BITRATE}k",
+        "-minrate",
+        "{TARGET_BITRATE}k",
+        "-maxrate",
+        "{TARGET_BITRATE}k",
+        "-bufsize",
+        "{BUF_SIZE}k",
+      ],
+      abr: ["-b:v", "{TARGET_BITRATE}k"],
       vbr: null,
       crf: ["-crf", "CRF_VALUE"],
     },
@@ -25,8 +36,8 @@ export const VideoCodecs = {
     friendlyName: "H.265",
     rateControl: {
       cbr: null,
-      vbr: [],
-      abr: ["-b:v", "TARGET_BITRATE"],
+      vbr: null,
+      abr: ["-b:v", "{TARGET_BITRATE}k"],
       crf: ["-crf", "CRF_VALUE"],
     },
     crf: {
@@ -43,8 +54,8 @@ export const VideoCodecs = {
     friendlyName: "AV1",
     rateControl: {
       cbr: null,
-      abr: ["-b:v", "TARGET_BITRATE"],
-      vbr: ["-b:v", "TARGET_BITRATE", "-minrate", "MIN_BITRATE", "-maxrate", "MAX_BITRATE"],
+      abr: ["-b:v", "{TARGET_BITRATE}k"],
+      vbr: ["-b:v", "{TARGET_BITRATE}k", "-minrate", "{MIN_BITRATE}k", "-maxrate", "{MAX_BITRATE}k"],
       crf: ["-crf", "CRF_VALUE"],
     },
     crf: {
@@ -60,9 +71,10 @@ export const VideoCodecs = {
     hwPrefix: null,
     friendlyName: "GIF",
     rateControl: {
-      cbr: [],
-      abr: ["-b:v", "TARGET_BITRATE"],
-      vbr: [],
+      cbr: null,
+      abr: ["-b:v", "{TARGET_BITRATE}k"],
+      vbr: null,
+      crf: null,
     },
     crf: null,
   },
@@ -73,9 +85,9 @@ export const VideoCodecs = {
     hwPrefix: "vp9",
     friendlyName: "VP9",
     rateControl: {
-      cbr: ["-b:v", "TARGET_BITRATE", "-minrate", "TARGET_BITRATE", "-maxrate", "TARGET_BITRATE"],
-      abr: ["-b:v", "TARGET_BITRATE"],
-      vbr: ["-b:v", "TARGET_BITRATE", "-minrate", "MIN_BITRATE", "-maxrate", "MAX_BITRATE"],
+      cbr: ["-b:v", "{TARGET_BITRATE}k", "-minrate", "{TARGET_BITRATE}k", "-maxrate", "{TARGET_BITRATE}k"],
+      abr: ["-b:v", "{TARGET_BITRATE}k"],
+      vbr: ["-b:v", "{TARGET_BITRATE}k", "-minrate", "{MIN_BITRATE}k", "-maxrate", "{MAX_BITRATE}k"],
       crf: ["-crf", "CRF_VALUE", "-b:v", "0"],
     },
     crf: {
