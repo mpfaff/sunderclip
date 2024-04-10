@@ -9,7 +9,7 @@ export default function LoadingBar({
   fillColor,
   scaleOrigin,
 }: {
-  value: Accessor<number>;
+  value: (() => number) | Accessor<number>;
   name: string;
   min: number;
   max: number;

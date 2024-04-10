@@ -2,7 +2,7 @@ use std::process::Stdio;
 
 use tauri::{Manager, Window};
 use tokio::{
-    io::{AsyncReadExt, BufReader},
+    io::{AsyncBufReadExt, BufReader},
     process::Command,
 };
 
@@ -38,26 +38,30 @@ pub async fn render(
         "-ss",
         trim_start.to_string().as_str(),
         "-t",
-        trim_end.to_string().as_str(),
+        (trim_end - trim_start).to_string().as_str(),
         "-map",
         "0:v",
     ]);
 
     command.arg("-filter_complex");
-    for i in &audio_tracks {
-        // Bit lazy code, it is currently 12AM, also this won't work yet
-        // FIXME
-        if i == &audio_tracks.len() {
-            command.arg(format!("[0:{}]", i));
+    let mut audio_command = String::new().to_owned();
+    for i in audio_tracks.iter() {
+        if *i != audio_tracks.len() as u32 {
+            audio_command.push_str(&format!("[0:{}]", i).to_owned());
         } else {
-            command.arg(format!("[0:{}]amerge=inputs={}[a]", i, &audio_tracks.len()));
+            audio_command
+                .push_str(&format!("[0:{}]amerge=inputs={}[a]", i, &audio_tracks.len()).to_owned())
         }
     }
+    command.arg(audio_command);
+    command.args(["-ac", "2"]); // Stereo audio channels
     command.args(["-map", "[a]"]);
 
     command.args(codec_rate_control);
     command.args(["-progress", "pipe:1"]);
     command.arg(output_filepath);
+
+    println!("{:?}", &command);
 
     let child = command
         .creation_flags(CREATE_NO_WINDOW)
@@ -66,18 +70,25 @@ pub async fn render(
         .map_err(|e| e.to_string())?;
 
     let mut reader = BufReader::new(child.stdout.unwrap());
-    let mut line_buf = Vec::new();
+    let mut lines = String::new();
+
+    const PROGRESS_LINES: u8 = 12;
+    let mut current_line: u8 = 0;
 
     while reader
-        .read_buf(&mut line_buf)
+        .read_line(&mut lines)
         .await
         .map_err(|e| e.to_string())?
         != 0
     {
-        let line = std::str::from_utf8(&line_buf).map_err(|e| e.to_string())?;
-        window.emit("export_progress", line).unwrap();
+        current_line += 1;
 
-        line_buf.clear();
+        if current_line >= PROGRESS_LINES {
+            window.emit("export_progress", &lines).unwrap();
+
+            lines.clear();
+            current_line = 0;
+        }
     }
 
     Ok(())

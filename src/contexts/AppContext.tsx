@@ -11,11 +11,18 @@ function createAppContext() {
   const [videoFile, setVideoFile] = createSignal<string | null>(null);
   const [mediaData, setMediaData] = createSignal<MediaData | null>(null);
   const [trim, setTrim] = createStore<TrimRange>({ start: 0, end: Infinity });
-  const [rendering, setRendering] = createSignal(false);
+  const [renderData, setRenderData] = createStore<{ rendering: boolean; renderer: Renderer | null }>({
+    rendering: false,
+    renderer: null,
+  });
 
   async function render(settings: RenderInfo, sizeLimit: RenderSizeLimit) {}
 
-  return [{ videoElement, videoFile, mediaData, rendering, trim }, { setVideoElement, setVideoFile, setMediaData, setTrim, setRendering }, { render }] as const;
+  return [
+    { videoElement, videoFile, mediaData, renderData, trim },
+    { setVideoElement, setVideoFile, setMediaData, setTrim, setRenderData },
+    { render },
+  ] as const;
 }
 type AppContextType = ReturnType<typeof createAppContext>;
 
@@ -38,7 +45,10 @@ export default function AppProvider(props: AppProvider) {
   const [videoFile, setVideoFile] = createSignal<string | null>(null);
   const [mediaData, setMediaData] = createSignal<MediaData | null>(null);
   const [trim, setTrim] = createStore<TrimRange>({ start: 0, end: Infinity });
-  const [rendering, setRendering] = createSignal(false);
+  const [renderData, setRenderData] = createStore<{ rendering: boolean; renderer: Renderer | null }>({
+    rendering: false,
+    renderer: null,
+  });
 
   function newProject() {
     // TODO: implement actual new project dialog
@@ -83,22 +93,24 @@ export default function AppProvider(props: AppProvider) {
   }
 
   async function render(settings: RenderInfo, sizeLimit: RenderSizeLimit) {
+    setRenderData("rendering", true);
+
     const renderer = new Renderer(
       {
         ...settings,
         trimStart: trim.start,
         trimEnd: trim.end,
       },
-      sizeLimit
+      sizeLimit,
+      {
+        totalDuration: trim.end - trim.start,
+      }
     );
 
     await renderer.init();
 
-    renderer.addProgressListener((data) => {
-      console.log(data);
-    });
+    setRenderData("renderer", renderer);
 
-    // setRendering(true);
     await renderer.render();
 
     renderer.cleanup();
@@ -107,7 +119,7 @@ export default function AppProvider(props: AppProvider) {
   onMount(async () => {
     await Menubar.init();
     Menubar.addEventListener("new_proj", newProject);
-    Menubar.addEventListener("prefs", () => console.log("Preferences"));
+    Menubar.addEventListener("prefs", () => alert("Preferences: coming soon"));
     Menubar.addEventListener("zoom_in", zoomIn);
     Menubar.addEventListener("zoom_out", zoomOut);
 
@@ -123,7 +135,7 @@ export default function AppProvider(props: AppProvider) {
 
   return (
     <AppContext.Provider
-      value={[{ videoElement, videoFile, mediaData, rendering, trim }, { setVideoElement, setVideoFile, setMediaData, setRendering, setTrim }, { render }]}
+      value={[{ videoElement, videoFile, mediaData, renderData, trim }, { setVideoElement, setVideoFile, setMediaData, setRenderData, setTrim }, { render }]}
     >
       {props.children}
     </AppContext.Provider>

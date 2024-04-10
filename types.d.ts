@@ -238,6 +238,23 @@ export type RenderSettings = {
   trimEnd: number;
 } & RenderInfo;
 
+export type RenderMeta = {
+  totalDuration: number;
+};
+
+export type RawProgress = {
+  out_time_us: number;
+  fps: number;
+  speed: number;
+  progress: "continue" | "end";
+  bitrate: number;
+};
+
 export type ProgressData = {
   percentage: number;
+  currentTimeMs: number;
+  eta: Date | null;
+  fps: number;
+  speed: number;
+  done: boolean;
 };
