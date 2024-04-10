@@ -43,10 +43,17 @@ pub async fn render(
         "0:v",
     ]);
 
+    command.arg("-filter_complex");
     for i in &audio_tracks {
-        command.arg("-map");
-        command.arg(format!("0:{}", i));
+        // Bit lazy code, it is currently 12AM, also this won't work yet
+        // FIXME
+        if i == &audio_tracks.len() {
+            command.arg(format!("[0:{}]", i));
+        } else {
+            command.arg(format!("[0:{}]amerge=inputs={}[a]", i, &audio_tracks.len()));
+        }
     }
+    command.args(["-map", "[a]"]);
 
     command.args(codec_rate_control);
     command.args(["-progress", "pipe:1"]);
