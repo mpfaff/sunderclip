@@ -11,7 +11,7 @@ use super::CREATE_NO_WINDOW;
 
 #[tauri::command]
 pub async fn get_hwaccels() -> Result<Vec<String>, String> {
-    let mut hwAccelerators = Vec::new();
+    let mut hw_accelerators = Vec::new();
 
     let command = Command::new(FFMPEG_PATH.get().unwrap())
         .args(["-hide_banner", "-hwaccels"])

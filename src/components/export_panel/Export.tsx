@@ -295,7 +295,9 @@ export default function Export() {
                 <option value="abr" disabled={VideoCodecs[exportInfo.videoCodec].rateControl["abr"] == null}>
                   ABR (average bitrate)
                 </option>
-                <option value="crf" disabled={VideoCodecs[exportInfo.videoCodec].rateControl["crf"] == null}>
+
+                {/* CRF controls constant quality, thus impractical to use with size limit */}
+                <option value="crf" disabled={exportInfo.limitSize || VideoCodecs[exportInfo.videoCodec].rateControl["crf"] == null}>
                   CRF (quality control)
                 </option>
               </select>

@@ -10,10 +10,6 @@ use crate::FFMPEG_PATH;
 
 use super::CREATE_NO_WINDOW;
 
-struct RenderResult {
-    file_size: f64,
-}
-
 #[tauri::command]
 pub async fn render(
     window: Window,
@@ -43,25 +39,33 @@ pub async fn render(
         "0:v",
     ]);
 
-    command.arg("-filter_complex");
-    let mut audio_command = String::new().to_owned();
-    for i in audio_tracks.iter() {
-        if *i != audio_tracks.len() as u32 {
-            audio_command.push_str(&format!("[0:{}]", i).to_owned());
-        } else {
-            audio_command
-                .push_str(&format!("[0:{}]amerge=inputs={}[a]", i, &audio_tracks.len()).to_owned())
+    if (audio_tracks.len() < 2) {
+        // TODO: Map single stream if applicable
+    } else {
+        let mut audio_command = String::new().to_owned();
+        for i in audio_tracks.iter() {
+            if *i == 0 {
+                command.arg("-filter_complex");
+            }
+
+            if *i != audio_tracks.len() as u32 {
+                &audio_command.push_str(&format!("[0:{}]", *i).to_owned());
+            } else {
+                &audio_command.push_str(
+                    &format!("[0:{}]amerge=inputs={}[a]", *i, &audio_tracks.len()).to_owned(),
+                );
+
+                command.arg(&audio_command);
+                command.args(["-ac", "2"]); // Stereo audio channels
+                command.args(["-map", "[a]"]);
+            }
         }
     }
-    command.arg(audio_command);
-    command.args(["-ac", "2"]); // Stereo audio channels
-    command.args(["-map", "[a]"]);
 
     command.args(codec_rate_control);
+
     command.args(["-progress", "pipe:1"]);
     command.arg(output_filepath);
-
-    println!("{:?}", &command);
 
     let child = command
         .creation_flags(CREATE_NO_WINDOW)
