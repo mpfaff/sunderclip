@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { ProgressData, RawProgress, RenderInfo, RenderMeta, RenderSettings, RenderSizeLimit } from "../../types";
+import { ProgressData, RawProgress, RenderMeta, RenderSettings, RenderSizeLimit } from "../../types";
 import { stat } from "@tauri-apps/plugin-fs";
 import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
 import { VideoCodecs } from "../components/export_panel/Codecs";
@@ -18,6 +18,7 @@ export default class Renderer {
       ["MIN_BITRATE", "minBitrate"],
       ["MAX_BITRATE", "maxBitrate"],
       ["CRF_VALUE", "crfValue"],
+      ["BUF_SIZE", "bufSize"],
     ]);
 
     for (const arg of VideoCodecs[settings.vCodecName].rateControl[settings.rateControl]!) {

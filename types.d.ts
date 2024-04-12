@@ -224,6 +224,7 @@ export type RenderInfo = {
   targetBitrate: number;
   maxBitrate: number;
   minBitrate: number;
+  bufSize: number;
   crfValue: number;
 
   vCodecName: VideoCodec;

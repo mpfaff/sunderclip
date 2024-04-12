@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createSignal, onMount } from "solid-js";
+import { For, Show, createEffect, onMount } from "solid-js";
 import { useAppContext } from "../../contexts/AppContext";
 import Panel from "../panel/Panel";
 
@@ -123,10 +123,11 @@ export default function Export() {
       vCodecName: exportInfo.videoCodec,
       aCodecName: exportInfo.audioCodec,
       rateControl: exportInfo.rateControl,
-      targetBitrate: exportInfo.targetBitrate!,
+      targetBitrate: exportInfo.targetBitrate || 0,
+      maxBitrate: exportInfo.maxBitrate || 0,
+      minBitrate: exportInfo.minBitrate || 0,
       crfValue: exportInfo.crfValue!,
-      maxBitrate: exportInfo.maxBitrate!,
-      minBitrate: exportInfo.minBitrate!,
+      bufSize: (exportInfo.targetBitrate || 0) * 2,
       inputFilepath: videoFile()!,
       outputFilepath: exportInfo.absolutePath!,
       audioTracks: exportInfo.mergeAudioTracks,
