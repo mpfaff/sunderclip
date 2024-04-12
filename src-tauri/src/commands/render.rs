@@ -1,17 +1,30 @@
-use std::process::Stdio;
+use std::{
+    collections::HashMap,
+    process::Stdio,
+    sync::{atomic::AtomicU32, LazyLock},
+};
 
+use serde_json::json;
 use tauri::{Manager, Window};
 use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::Command,
+    sync::Mutex,
 };
 
 use crate::FFMPEG_PATH;
 
 use super::CREATE_NO_WINDOW;
 
+struct RenderTask {
+    canceller: tokio::sync::oneshot::Sender<()>,
+}
+
+static RENDER_TASKS: LazyLock<Mutex<HashMap<u32, RenderTask>>> = LazyLock::new(Default::default);
+static NEXT_RENDER_TASK: AtomicU32 = AtomicU32::new(0);
+
 #[tauri::command]
-pub async fn render(
+pub async fn start_render(
     window: Window,
     input_filepath: &str,
     output_filepath: &str,
@@ -39,8 +52,10 @@ pub async fn render(
         "0:v",
     ]);
 
-    if (audio_tracks.len() < 2) {
-        // TODO: Map single stream if applicable
+    if audio_tracks.len() < 2 {
+        if audio_tracks.len() == 1 {
+            command.args(["-map", format!("0:{}", audio_tracks[0]).as_str()]);
+        }
     } else {
         let mut audio_command = String::new().to_owned();
         for i in audio_tracks.iter() {
@@ -49,9 +64,9 @@ pub async fn render(
             }
 
             if *i != audio_tracks.len() as u32 {
-                &audio_command.push_str(&format!("[0:{}]", *i).to_owned());
+                audio_command.push_str(&format!("[0:{}]", *i).to_owned());
             } else {
-                &audio_command.push_str(
+                audio_command.push_str(
                     &format!("[0:{}]amerge=inputs={}[a]", *i, &audio_tracks.len()).to_owned(),
                 );
 
@@ -67,33 +82,65 @@ pub async fn render(
     command.args(["-progress", "pipe:1"]);
     command.arg(output_filepath);
 
-    let child = command
-        .creation_flags(CREATE_NO_WINDOW)
-        .stdout(Stdio::piped())
-        .spawn()
-        .map_err(|e| e.to_string())?;
-
-    let mut reader = BufReader::new(child.stdout.unwrap());
-    let mut lines = String::new();
-
-    const PROGRESS_LINES: u8 = 12;
-    let mut current_line: u8 = 0;
-
-    while reader
-        .read_line(&mut lines)
-        .await
-        .map_err(|e| e.to_string())?
-        != 0
+    let id = NEXT_RENDER_TASK.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let (canceller, mut rx) = tokio::sync::oneshot::channel();
     {
-        current_line += 1;
-
-        if current_line >= PROGRESS_LINES {
-            window.emit("export_progress", &lines).unwrap();
-
-            lines.clear();
-            current_line = 0;
-        }
+        let mut render_tasks = RENDER_TASKS.lock().await;
+        render_tasks.insert(id, RenderTask { canceller });
     }
+    tokio::task::spawn(async move {
+        // let window = window.clone();
+        let result = async {
+            let child = command
+                .creation_flags(CREATE_NO_WINDOW)
+                .stdout(Stdio::piped())
+                .spawn()
+                .map_err(|e| e.to_string())?;
 
+            let mut reader = BufReader::new(child.stdout.unwrap());
+            let mut lines = String::new();
+
+            const PROGRESS_LINES: u8 = 12;
+            let mut current_line: u8 = 0;
+
+            loop {
+                let mut read_line_fut = reader.read_line(&mut lines);
+                tokio::select! {
+                    result = read_line_fut => {
+                        if result.map_err(|e| e.to_string())? == 0 {
+                            break;
+                        }
+
+                        current_line += 1;
+
+                        if current_line >= PROGRESS_LINES {
+                            window.emit("export_progress", &lines).unwrap();
+
+                            lines.clear();
+                            current_line = 0;
+                        }
+                    }
+                    _ = &mut rx => {
+                        return Err("Cancelled".into());
+                    }
+                }
+            }
+
+            Ok::<_, String>(())
+        }
+        .await;
+
+        match result {
+            Ok(()) => {}
+            Err(e) => {
+                window
+                    .emit("export_progress", format!("error:{e}"))
+                    .unwrap();
+            }
+        }
+    });
     Ok(())
 }
+
+#[tauri::command]
+pub async fn cancel_render() {}

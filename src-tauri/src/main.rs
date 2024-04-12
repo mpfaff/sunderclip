@@ -1,5 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![feature(lazy_cell)]
 
 #[cfg(target_os = "windows")]
 const FFMPEG_BIN: &'static [u8] = include_bytes!("ffmpeg/windows/ffmpeg.exe.zst");
@@ -201,7 +202,7 @@ fn main() {
             commands::toggle_fullscreen::toggle_fullscreen,
             commands::get_encoders::get_encoders,
             commands::get_hwaccels::get_hwaccels,
-            commands::render::render
+            commands::render::start_render
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

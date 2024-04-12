@@ -8,10 +8,12 @@ export default class Renderer {
   private settings: RenderSettings & { codecRateControl: string[] };
   private sizeLimit: RenderSizeLimit;
   private meta: RenderMeta;
+  private lastProgress: ProgressData | undefined;
+
   private progressUnlistener: UnlistenFn | undefined;
   private listeners: Set<(data: ProgressData) => void> = new Set();
 
-  constructor(settings: RenderSettings, sizeLimit: RenderSizeLimit, meta: RenderMeta) {
+  private static generateRateControlCmd(settings: RenderSettings) {
     const rateControlCommand: string[] = [];
     const replacementMap = new Map([
       ["TARGET_BITRATE", "targetBitrate"],
@@ -34,7 +36,11 @@ export default class Renderer {
       }
     }
 
-    this.settings = { ...settings, codecRateControl: rateControlCommand };
+    return rateControlCommand;
+  }
+
+  constructor(settings: RenderSettings, sizeLimit: RenderSizeLimit, meta: RenderMeta) {
+    this.settings = { ...settings, codecRateControl: Renderer.generateRateControlCmd(settings) };
     this.sizeLimit = sizeLimit;
     this.meta = meta;
 
@@ -48,7 +54,7 @@ export default class Renderer {
   handleProgress(data: Event<string>) {
     const lines = data.payload;
     const properties = lines.split("\n");
-    const progress: ProgressData = {
+    const progress: ProgressData = this.lastProgress || {
       percentage: 0,
       currentTimeMs: 0,
       fps: 0,
@@ -61,7 +67,7 @@ export default class Renderer {
       const [name, value] = property.split("=") as [keyof RawProgress, string];
       const validValue = value !== "N/A";
 
-      if (!validValue) return; // TODO: Maintain only valid values
+      if (!validValue) return;
 
       switch (name) {
         case "out_time_us": {
@@ -83,6 +89,8 @@ export default class Renderer {
         }
       }
     });
+
+    this.lastProgress = progress;
 
     for (const listener of this.listeners.values()) {
       listener(progress);
@@ -111,6 +119,9 @@ export default class Renderer {
       const percentDiff = file.size / (this.sizeLimit.maxSize * 1e6);
 
       // if (Math.abs(1 - percentDiff) < this.sizeLimit.retryThreshold) break;
+
+      // this.settings.targetBitrate *= percentDiff;
+      // this.settings.maxBitrate *= percentDiff;
 
       // return await this.render();
     } catch (err) {

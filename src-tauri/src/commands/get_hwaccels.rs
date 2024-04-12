@@ -43,9 +43,9 @@ pub async fn get_hwaccels() -> Result<Vec<String>, String> {
         != 0
     {
         let line = std::str::from_utf8(&line_buf).map_err(|e| e.to_string())?;
-        hwAccelerators.push(line.trim().to_owned());
+        hw_accelerators.push(line.trim().to_owned());
         line_buf.clear();
     }
 
-    Ok(hwAccelerators)
+    Ok(hw_accelerators)
 }
