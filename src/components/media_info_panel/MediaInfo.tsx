@@ -9,6 +9,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { gcd, round } from "../../util";
 import { useAppContext } from "../../contexts/AppContext";
 import { path } from "@tauri-apps/api";
+import { stat } from "@tauri-apps/plugin-fs";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
@@ -44,6 +45,8 @@ export default function MediaInfo() {
 
       const fileExt = await path.extname(file);
 
+      const created = json.format.tags.creation_time || (await stat(file)).birthtime || 0;
+
       const data: MediaData = {
         filepath: file,
         filename: await path.basename(file, "." + fileExt),
@@ -55,7 +58,7 @@ export default function MediaInfo() {
         streams: json.streams,
         aspectRatioX: round(videoStream.width / aspectRatioGcd),
         aspectRatioY: round(videoStream.height / aspectRatioGcd),
-        dateCreated: new Date(json.format.tags.creation_time || 0),
+        dateCreated: created instanceof Date ? created : new Date(created),
         size,
         size_mb: round(size / 1e6),
         duration: round(Number(videoStream.duration), 3),

@@ -24,13 +24,13 @@ class Menubar {
     for (const listener of listeners) listener(event.payload);
   }
 
-  async addEventListener(key: MenubarBtnOption, callback: Function) {
+  addEventListener(key: MenubarBtnOption, callback: Function) {
     if (!this.listeners.has(key)) this.listeners.set(key, new Set());
 
     this.listeners.get(key)!.add(callback);
   }
 
-  async removeEventListener(key: MenubarBtnOption, callback: Function) {
+  removeEventListener(key: MenubarBtnOption, callback: Function) {
     const listener = this.listeners.get(key);
     if (listener == null) return console.warn(`Cannot remove non-existent listener for ${key}`);
     listener.delete(callback);
@@ -40,6 +40,7 @@ class Menubar {
 
   cleanup() {
     for (const unlisten of this.unlisteners) unlisten();
+    this.listeners.clear();
   }
 }
 

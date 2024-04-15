@@ -4,9 +4,7 @@ use serde::{Deserialize, Serialize};
 use tauri::http::{self, HeaderValue};
 use tokio::{io::AsyncReadExt as _, process::Command};
 
-use crate::FFMPEG_PATH;
-
-use super::CREATE_NO_WINDOW;
+use crate::{constants::CREATE_NO_WINDOW, FFMPEG_PATH};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ExtractAudioParams {

@@ -36,6 +36,8 @@ use tauri::{
 };
 
 mod commands;
+mod constants;
+mod protocols;
 
 fn get_app_temp_data_dir(app: &App) -> PathBuf {
     let temp_data_path = app
@@ -169,7 +171,7 @@ fn main() {
             let runtime = Arc::clone(&runtime);
             move |_app, req, resp| {
                 runtime.spawn(async move {
-                    let mut res = commands::extract_audio::extract_audio_protocol(req)
+                    let mut res = protocols::extract_audio::extract_audio_protocol(req)
                         .await
                         .unwrap_or_else(|e| {
                             http::Response::builder()
@@ -202,7 +204,9 @@ fn main() {
             commands::toggle_fullscreen::toggle_fullscreen,
             commands::get_encoders::get_encoders,
             commands::get_hwaccels::get_hwaccels,
-            commands::render::start_render
+            commands::render::start_render,
+            commands::render::cancel_render,
+            commands::show_in_folder::show_in_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

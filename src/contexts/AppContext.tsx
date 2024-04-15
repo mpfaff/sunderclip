@@ -16,7 +16,7 @@ function createAppContext() {
     renderer: null,
   });
 
-  async function render(settings: RenderInfo, sizeLimit: RenderSizeLimit) {}
+  async function render(settings: RenderInfo, sizeLimit: RenderSizeLimit | null) {}
 
   return [
     { videoElement, videoFile, mediaData, renderData, trim },
@@ -92,7 +92,7 @@ export default function AppProvider(props: AppProvider) {
     zoom(true);
   }
 
-  async function render(settings: RenderInfo, sizeLimit: RenderSizeLimit) {
+  async function render(settings: RenderInfo, sizeLimit: RenderSizeLimit | null) {
     setRenderData("rendering", true);
 
     const renderer = new Renderer(
@@ -112,14 +112,16 @@ export default function AppProvider(props: AppProvider) {
     setRenderData("renderer", renderer);
 
     await renderer.render();
+  }
 
-    renderer.cleanup();
+  function openPreferences() {
+    alert("Preferences: coming soon");
   }
 
   onMount(async () => {
     await Menubar.init();
     Menubar.addEventListener("new_proj", newProject);
-    Menubar.addEventListener("prefs", () => alert("Preferences: coming soon"));
+    Menubar.addEventListener("prefs", openPreferences);
     Menubar.addEventListener("zoom_in", zoomIn);
     Menubar.addEventListener("zoom_out", zoomOut);
 

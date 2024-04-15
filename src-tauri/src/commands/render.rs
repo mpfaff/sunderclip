@@ -4,17 +4,15 @@ use std::{
     sync::{atomic::AtomicU32, LazyLock},
 };
 
-use serde_json::json;
 use tauri::{Manager, Window};
 use tokio::{
+    fs::remove_file,
     io::{AsyncBufReadExt, BufReader},
     process::Command,
     sync::Mutex,
 };
 
-use crate::FFMPEG_PATH;
-
-use super::CREATE_NO_WINDOW;
+use crate::{constants::CREATE_NO_WINDOW, FFMPEG_PATH};
 
 struct RenderTask {
     canceller: tokio::sync::oneshot::Sender<()>,
@@ -34,7 +32,7 @@ pub async fn start_render(
     codec_rate_control: Vec<&str>,
     trim_start: f64,
     trim_end: f64,
-) -> Result<(), String> {
+) -> Result<u32, String> {
     let mut command = Command::new(FFMPEG_PATH.get().unwrap());
 
     command.args([
@@ -59,7 +57,7 @@ pub async fn start_render(
     } else {
         let mut audio_command = String::new().to_owned();
         for i in audio_tracks.iter() {
-            if *i == 0 {
+            if *i == 1 {
                 command.arg("-filter_complex");
             }
 
@@ -71,8 +69,8 @@ pub async fn start_render(
                 );
 
                 command.arg(&audio_command);
-                command.args(["-ac", "2"]); // Stereo audio channels
                 command.args(["-map", "[a]"]);
+                command.args(["-ac", "2"]); // Stereo audio channels
             }
         }
     }
@@ -89,7 +87,6 @@ pub async fn start_render(
         render_tasks.insert(id, RenderTask { canceller });
     }
     tokio::task::spawn(async move {
-        // let window = window.clone();
         let result = async {
             let child = command
                 .creation_flags(CREATE_NO_WINDOW)
@@ -104,9 +101,9 @@ pub async fn start_render(
             let mut current_line: u8 = 0;
 
             loop {
-                let mut read_line_fut = reader.read_line(&mut lines);
+                let read_line = reader.read_line(&mut lines);
                 tokio::select! {
-                    result = read_line_fut => {
+                    result = read_line => {
                         if result.map_err(|e| e.to_string())? == 0 {
                             break;
                         }
@@ -121,6 +118,8 @@ pub async fn start_render(
                         }
                     }
                     _ = &mut rx => {
+                        window.emit("export_progress", format!("cancelled")).unwrap();
+
                         return Err("Cancelled".into());
                     }
                 }
@@ -129,6 +128,8 @@ pub async fn start_render(
             Ok::<_, String>(())
         }
         .await;
+
+        RENDER_TASKS.lock().await.remove(&id);
 
         match result {
             Ok(()) => {}
@@ -139,8 +140,17 @@ pub async fn start_render(
             }
         }
     });
-    Ok(())
+
+    Ok(id)
 }
 
 #[tauri::command]
-pub async fn cancel_render() {}
+pub async fn cancel_render(task_id: u32) -> Result<bool, bool> {
+    match RENDER_TASKS.lock().await.remove(&task_id) {
+        Some(render_task) => {
+            render_task.canceller.send(()).unwrap();
+            Ok(true)
+        }
+        None => Err(false),
+    }
+}

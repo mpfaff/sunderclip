@@ -23,6 +23,7 @@
     "dialog:allow-message",
 
     "fs:default",
+    "fs:allow-remove",
     {
       "identifier": "fs:scope",
       "allow": [{ "path": "**" }]

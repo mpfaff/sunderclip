@@ -31,12 +31,27 @@
   color: hsl(var(--clr-neutral-800));
 }
 
-.timeline__controls {
+.timeline__panel {
   border-left: 1px solid hsl(var(--clr-neutral-200));
   display: flex;
   flex-direction: column;
-  justify-content: center;
   padding: 0.5em 1em;
+}
+
+.timeline__controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.timeline__trimInfo,
+.timeline__btns {
+  display: flex;
+}
+
+.timeline__trimInfo {
+  justify-content: space-between;
 }
 
 .timeline__container {

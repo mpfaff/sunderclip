@@ -252,6 +252,7 @@ export type RawProgress = {
 };
 
 export type ProgressData = {
+  errored: boolean;
   percentage: number;
   currentTimeMs: number;
   eta: Date | null;

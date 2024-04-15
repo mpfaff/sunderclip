@@ -4,9 +4,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use crate::FFPROBE_PATH;
-
-use super::CREATE_NO_WINDOW;
+use crate::{constants::CREATE_NO_WINDOW, FFPROBE_PATH};
 
 #[tauri::command]
 pub async fn ffprobe_cmd(filepath: &str) -> Result<String, String> {

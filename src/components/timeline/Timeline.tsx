@@ -7,8 +7,10 @@ import { useAppContext } from "../../contexts/AppContext";
 import { usePlayerContext } from "../../contexts/PlayerContext";
 import { createStore } from "solid-js/store";
 import { TrimRange } from "../../../types";
+import Menubar from "../../classes/Menubar";
 
 const capturingElements = new Set(["INPUT", "SELECT", "BUTTON"]);
+
 export default function Timeline() {
   const [{ videoElement, mediaData, trim }, { setTrim }] = useAppContext();
   const [{ currentTime, playing }, { setCurrentTime, setPlaying, video }] = usePlayerContext();
@@ -17,6 +19,7 @@ export default function Timeline() {
   const [trimDragging, setTrimDragging] = createStore<{ start: boolean; end: boolean; any: boolean }>({ start: false, end: false, any: false });
   const [cursorPos, setCursorPos] = createSignal(0);
   const [trimPos, setTrimPos] = createStore<TrimRange>({ start: 0, end: 1 });
+  const [trimStartTime, setTrimStartTime] = createSignal<number | null>(null);
   const [timecodeType, setTimecodeType] = createSignal<"frames" | "time">("frames");
 
   let timelineBar: HTMLDivElement;
@@ -28,7 +31,7 @@ export default function Timeline() {
     if (
       focusedElement != null &&
       focusedElement instanceof HTMLElement &&
-      (capturingElements.has(focusedElement.tagName) || focusedElement.dataset["captureFocus"])
+      (capturingElements.has(focusedElement.tagName) || focusedElement.dataset["captureFocus"] != null)
     )
       return;
 
@@ -38,9 +41,15 @@ export default function Timeline() {
         break;
       }
       case "ArrowLeft": {
+        let multiplier = 1;
+        if (event.ctrlKey) multiplier = 4;
+        updateVideoTime(currentTime() - (1 / (mediaData()?.fps ?? 10)) * multiplier);
         break;
       }
       case "ArrowRight": {
+        let multiplier = 1;
+        if (event.ctrlKey) multiplier = 4;
+        updateVideoTime(currentTime() + (1 / (mediaData()?.fps ?? 10)) * multiplier);
         break;
       }
       default:
@@ -51,8 +60,10 @@ export default function Timeline() {
   }
 
   function updateVideoTime(location: number) {
-    videoElement()!.currentTime = location;
+    const video = videoElement()!;
+    location = Math.max(0, Math.min(location, video.duration));
 
+    video.currentTime = location;
     setCurrentTime(location);
   }
 
@@ -65,7 +76,7 @@ export default function Timeline() {
   function handleTrimheadDown(event: PointerEvent) {
     const trimStart = (event.target as HTMLDivElement).id === "trimhead-start";
     setTrimDragging(trimStart ? "start" : "end", true);
-
+    if (!playing()) setTrimStartTime(videoElement()!.currentTime);
     handleTrimheadMove(event);
   }
 
@@ -110,10 +121,12 @@ export default function Timeline() {
       setDragging(false);
     } else if (trimDragging.any) {
       setTrimDragging(["start", "end", "any"], false);
+      if (trimStartTime() != null) updateVideoTime(trimStartTime()!);
     }
   }
 
   createEffect(() => {
+    // Sync any to if any trim head is being dragged
     setTrimDragging("any", trimDragging.start || trimDragging.end);
   });
 
@@ -133,11 +146,14 @@ export default function Timeline() {
 
     const { percentage } = getSliderLocation(properties, trimStart ? 0 : trimPos.start, !trimStart ? 1 : trimPos.end);
 
-    setTrim(trimheadName, percentage * videoElement()!.duration);
+    const time = percentage * videoElement()!.duration;
+    if (trimStartTime() != null) updateVideoTime(time);
+    setTrim(trimheadName, time);
     setTrimPos(trimheadName, percentage);
   }
 
   createEffect(() => {
+    // Sync cursor position to video player time
     if (dragging()) return;
 
     const time = currentTime();
@@ -153,7 +169,15 @@ export default function Timeline() {
     setTrim("end", duration);
   });
 
+  function resetTimeline() {
+    setTrimPos("start", 0);
+    setTrimPos("end", 1);
+    setCursorPos(0);
+  }
+
   onMount(() => {
+    Menubar.addEventListener("new_proj", resetTimeline);
+
     window.addEventListener("pointermove", handleCursorMove);
     window.addEventListener("pointerup", handleCursorUp);
 
@@ -161,6 +185,8 @@ export default function Timeline() {
   });
 
   onCleanup(() => {
+    Menubar.removeEventListener("new_proj", resetTimeline);
+
     window.removeEventListener("pointermove", handleCursorMove);
     window.removeEventListener("pointerup", handleCursorUp);
 
@@ -175,35 +201,52 @@ export default function Timeline() {
         <div class={styles.timeline__timecodeType}>
           <label for="timecode">Timecode style</label>
           <select name="timecode" id="timecode" onInput={(e) => setTimecodeType(e.target.value === "ms" ? "time" : "frames")}>
-            <option value="fps">Frames</option>
+            <option value="fps" title="Note: Will be inaccurate if video has variable frame rate">
+              Frames
+            </option>
             <option value="ms">Milliseconds</option>
           </select>
         </div>
       </div>
-      <div class={styles.timeline__controls}>
-        <div class={styles.timeline__container}>
-          <div class={styles.timeline__bar} ref={(ref) => (timelineBar = ref)}>
-            <div class={styles.timeline__scrollbar} tabIndex={0} role="slider" aria-label="Seek slider" onPointerDown={handleCursorDown}>
+      <div class={styles.timeline__panel}>
+        <div class={styles.timeline__trimInfo}>
+          <p class={styles.timeline__trim_text}>
+            Trim start: <span>{round(trim.start)}s</span>
+          </p>
+          <p class={styles.timeline__trim_text}>
+            Trim end: <span>{round(trim.end)}s</span>
+          </p>
+        </div>
+        <div class={styles.timeline__controls}>
+          <div class={styles.timeline__container}>
+            <div class={styles.timeline__bar} ref={(ref) => (timelineBar = ref)}>
+              <div class={styles.timeline__scrollbar} tabIndex={0} role="slider" aria-label="Seek slider" onPointerDown={handleCursorDown}>
+                <div
+                  class={`${styles.timeline__cursor} ${styles.timeline__playhead}`}
+                  onPointerDown={handleCursorDown}
+                  style={`left: ${cursorPos() * 100}%`}
+                ></div>
+              </div>
               <div
-                class={`${styles.timeline__cursor} ${styles.timeline__playhead}`}
-                onPointerDown={handleCursorDown}
-                style={`left: ${cursorPos() * 100}%`}
+                id="trimhead-start"
+                class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_start}`}
+                style={`left: ${trimPos.start * 100}%`}
+                tabIndex={0}
+                data-capture-focus
+                onPointerDown={handleTrimheadDown}
+              ></div>
+              <div
+                id="trimhead-end"
+                class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_end}`}
+                style={`left: ${trimPos.end * 100}%`}
+                tabIndex={0}
+                data-capture-focus
+                onPointerDown={handleTrimheadDown}
               ></div>
             </div>
-            <div
-              id="trimhead-start"
-              class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_start}`}
-              style={`left: ${trimPos.start * 100}%`}
-              onPointerDown={handleTrimheadDown}
-            ></div>
-            <div
-              id="trimhead-end"
-              class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_end}`}
-              style={`left: ${trimPos.end * 100}%`}
-              onPointerDown={handleTrimheadDown}
-            ></div>
           </div>
         </div>
+        <div class={styles.timeline__btns}></div>
       </div>
     </Panel>
   );

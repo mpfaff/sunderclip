@@ -144,11 +144,16 @@ export default function Export() {
       )
         return;
 
-    render(settings, {
-      maxAttempts: exportInfo.sizeLimitDetails.maxAttempts,
-      maxSize: exportInfo.sizeLimitDetails.maxSize,
-      retryThreshold: exportInfo.sizeLimitDetails.retryThreshold,
-    });
+    render(
+      settings,
+      exportInfo.limitSize
+        ? {
+            maxAttempts: exportInfo.sizeLimitDetails.maxAttempts,
+            maxSize: exportInfo.sizeLimitDetails.maxSize,
+            retryThreshold: exportInfo.sizeLimitDetails.retryThreshold,
+          }
+        : null
+    );
   }
 
   return (
