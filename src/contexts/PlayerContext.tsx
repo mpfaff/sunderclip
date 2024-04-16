@@ -9,24 +9,18 @@ function createPlayerContextType() {
   const [audioTracks, setAudioTracks] = createStore<AudioTrack[]>([]);
   const audioContext = new AudioContext();
 
-  function pause() {
-    new HTMLVideoElement().pause();
-  }
-  function resume() {
-    new HTMLVideoElement().play();
-  }
-  function togglePlayback() {
-    const video = new HTMLVideoElement();
-    video.paused ? resume() : pause();
+  function f() {}
+  function setTime(time: number): number {
+    return time;
   }
 
   return [
     { currentTime, playing, audioTracks, audioContext },
-    { setCurrentTime, setPlaying, setAudioTracks, video: { pause, resume, togglePlayback } },
+    { setCurrentTime, setPlaying, setAudioTracks, video: { pause: f, resume: f, togglePlayback: f, setTime } },
   ] as const;
 }
-type PlayerContextType = ReturnType<typeof createPlayerContextType>;
 
+type PlayerContextType = ReturnType<typeof createPlayerContextType>;
 export const PlayerContext = createContext<PlayerContextType>();
 
 export function usePlayerContext() {
@@ -56,12 +50,20 @@ export default function PlayerProvider(props: ComponentProps<"div">) {
     const video = videoElement()!;
     video.paused ? resume() : pause();
   }
+  function setTime(time: number) {
+    const video = videoElement()!;
+
+    const location = Math.max(0, Math.min(time, video.duration));
+    video.currentTime = location;
+
+    return location;
+  }
 
   return (
     <PlayerContext.Provider
       value={[
         { currentTime, playing, audioTracks, audioContext },
-        { setCurrentTime, setPlaying, setAudioTracks, video: { pause, resume, togglePlayback } },
+        { setCurrentTime, setPlaying, setAudioTracks, video: { pause, resume, togglePlayback, setTime } },
       ]}
     >
       {props.children}

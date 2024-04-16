@@ -226,6 +226,7 @@ export type RenderInfo = {
   minBitrate: number;
   bufSize: number;
   crfValue: number;
+  overrideFile: boolean;
 
   vCodecName: VideoCodec;
   aCodecName: AudioCodec;
@@ -253,6 +254,7 @@ export type RawProgress = {
 
 export type ProgressData = {
   errored: boolean;
+  errorMsg: string | null;
   percentage: number;
   currentTimeMs: number;
   eta: Date | null;

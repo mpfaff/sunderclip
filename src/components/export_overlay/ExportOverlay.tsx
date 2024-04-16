@@ -1,47 +1,21 @@
-import { createStore } from "solid-js/store";
-import { Show, createEffect } from "solid-js";
+import { Show } from "solid-js";
 import dayjs from "dayjs";
 
 import { useAppContext } from "../../contexts/AppContext";
 
 import styles from "./ExportOverlay.module.css";
 import Overlay from "../overlay/Overlay";
-import LoadingBar from "../progress_bar/ProgressBar.tsx";
-import { ProgressData } from "../../../types";
+import LoadingBar from "../progress_bar/ProgressBar";
 import { round } from "../../util.ts";
 import { invoke } from "@tauri-apps/api/core";
 
 export default function ExportOverlay() {
   const [{ renderData }, { setRenderData }] = useAppContext();
-  const [progress, setProgress] = createStore<{ percentage: number; eta: Date | null; speed: number; done: boolean; errored: boolean }>({
-    percentage: 0,
-    eta: null,
-    speed: 1,
-    done: false,
-    errored: false,
-  });
 
-  const dateFormatter = new Intl.DateTimeFormat(undefined, {
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-  });
-
-  function updateProgress(data: ProgressData) {
-    setProgress("percentage", round(data.percentage * 100));
-    setProgress("eta", data.eta);
-    setProgress("done", data.done);
-    setProgress("errored", data.errored);
-  }
-
-  createEffect(() => {
-    if (renderData.renderer != null) {
-      renderData.renderer.addProgressListener(updateProgress);
-    }
-  });
+  const renderer = () => renderData.renderer;
 
   function timeToEta() {
-    return dayjs().to(progress.eta);
+    return dayjs().to(renderer()?.progress.eta);
   }
 
   function close() {
@@ -55,21 +29,31 @@ export default function ExportOverlay() {
         <div class={styles.export}>
           <h2 class={styles.export__heading}>Exporting</h2>
           <p class={styles.export__attempt_text}>
-            Attempt {renderData.renderer?.currentAttempt ?? ""}/{renderData.renderer?.maxAttempts || ""}
+            Attempt {renderer()?.currentAttempt() ?? ""}/{renderer()?.maxAttempts || ""}
           </p>
 
-          <LoadingBar name="Export progress" fillColor="hsl(var(--clr-primary-400))" max={100} min={0} value={() => progress.percentage} />
+          <LoadingBar
+            name="Export progress"
+            fillColor="hsl(var(--clr-primary-400))"
+            max={100}
+            min={0}
+            value={() => round((renderer()?.progress.percentage || 0) * 100)}
+            done={() => renderer()?.progress.errored == true || renderer()?.progress.done == true}
+          />
 
           <div class={styles.export__info}>
-            <p>ETA: {progress.eta == null ? "..." : `${timeToEta()} (${dateFormatter.format(progress.eta)})`}</p>
+            <p>ETA: {renderer()?.progress.eta == null ? "..." : timeToEta()}</p>
+            <Show when={renderer()?.progress.errored}>
+              <p>Error: {}</p>
+            </Show>
           </div>
 
           <div class={styles.export__btns}>
             <Show
-              when={!progress.errored && !progress.done}
+              when={!renderer()?.progress.errored && !renderer()?.progress.done}
               fallback={
                 <button class={styles.export_btn} onClick={close}>
-                  Finish
+                  {renderer()?.progress.errored ? "Close" : "Finish"}
                 </button>
               }
             >
@@ -85,7 +69,7 @@ export default function ExportOverlay() {
               <button
                 class={styles.export_btn}
                 onClick={() => {
-                  renderData.renderer?.cancelRender();
+                  renderer()?.cancelRender();
                   close();
                 }}
               >

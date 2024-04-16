@@ -6,7 +6,6 @@ use std::{
 
 use tauri::{Manager, Window};
 use tokio::{
-    fs::remove_file,
     io::{AsyncBufReadExt, BufReader},
     process::Command,
     sync::Mutex,
@@ -28,6 +27,7 @@ pub async fn start_render(
     output_filepath: &str,
     v_codec_id: &str,
     a_codec_id: &str,
+    override_file: bool,
     audio_tracks: Vec<u32>,
     codec_rate_control: Vec<&str>,
     trim_start: f64,
@@ -78,6 +78,11 @@ pub async fn start_render(
     command.args(codec_rate_control);
 
     command.args(["-progress", "pipe:1"]);
+
+    if override_file {
+        command.arg("-y");
+    }
+
     command.arg(output_filepath);
 
     let id = NEXT_RENDER_TASK.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
@@ -88,13 +93,13 @@ pub async fn start_render(
     }
     tokio::task::spawn(async move {
         let result = async {
-            let child = command
+            let mut child = command
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(Stdio::piped())
                 .spawn()
                 .map_err(|e| e.to_string())?;
 
-            let mut reader = BufReader::new(child.stdout.unwrap());
+            let mut reader = BufReader::new(child.stdout.take().unwrap());
             let mut lines = String::new();
 
             const PROGRESS_LINES: u8 = 12;
@@ -111,6 +116,12 @@ pub async fn start_render(
                         current_line += 1;
 
                         if current_line >= PROGRESS_LINES {
+                            if lines.contains("progress=end") {
+                                let status = child.wait().await.map_err(|e| e.to_string())?;
+                                if !status.success() {
+                                    return Err(format!("Not ok: {status}"));
+                                }
+                            }
                             window.emit("export_progress", &lines).unwrap();
 
                             lines.clear();

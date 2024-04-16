@@ -59,12 +59,9 @@ export default function Timeline() {
     event.preventDefault();
   }
 
-  function updateVideoTime(location: number) {
-    const video = videoElement()!;
-    location = Math.max(0, Math.min(location, video.duration));
-
-    video.currentTime = location;
-    setCurrentTime(location);
+  function updateVideoTime(time: number, displayTime = true) {
+    const newTime = video.setTime(time);
+    if (displayTime) setCurrentTime(newTime);
   }
 
   function handleCursorDown(event: PointerEvent) {
@@ -147,7 +144,7 @@ export default function Timeline() {
     const { percentage } = getSliderLocation(properties, trimStart ? 0 : trimPos.start, !trimStart ? 1 : trimPos.end);
 
     const time = percentage * videoElement()!.duration;
-    if (trimStartTime() != null) updateVideoTime(time);
+    if (trimStartTime() != null) updateVideoTime(time, false);
     setTrim(trimheadName, time);
     setTrimPos(trimheadName, percentage);
   }
@@ -163,6 +160,7 @@ export default function Timeline() {
   });
 
   createEffect(() => {
+    // Set trim end to end of video on new video load
     const duration = mediaData()?.duration;
     if (duration == null) return;
 

@@ -25,6 +25,7 @@
   top: 0;
   bottom: 0;
   animation: glint 2.5s linear infinite;
+  visibility: var(--state);
   background-image: linear-gradient(
     90deg,
     transparent 0%,

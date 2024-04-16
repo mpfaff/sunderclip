@@ -30,7 +30,7 @@ export function formatSeconds(seconds: number, framerate?: number) {
     ("0" + m).slice(-2) +
     ":" +
     ("0" + s).slice(-2) +
-    ":" +
+    ";" +
     (framerate == null ? ("000" + msOrFrames).slice(-3) : ("0".repeat(digits!) + msOrFrames).slice(-digits!))
   );
 }

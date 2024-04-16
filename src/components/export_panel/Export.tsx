@@ -1,4 +1,4 @@
-import { For, Show, createEffect, onMount } from "solid-js";
+import { For, Show, createEffect, onCleanup, onMount } from "solid-js";
 import { useAppContext } from "../../contexts/AppContext";
 import Panel from "../panel/Panel";
 
@@ -12,6 +12,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { ExportInfo, RateControlType, RenderInfo } from "../../../types";
 import { AudioCodec, AudioCodecs, VendorSuffix, VideoCodec, VideoCodecHwVendorSuffixes, VideoCodecs } from "./Codecs";
 import { exists } from "@tauri-apps/plugin-fs";
+import { round } from "../../util";
 
 type Codec<T> = {
   id: string; // FFMPEG encoder ID
@@ -126,6 +127,7 @@ export default function Export() {
       targetBitrate: exportInfo.targetBitrate || 0,
       maxBitrate: exportInfo.maxBitrate || 0,
       minBitrate: exportInfo.minBitrate || 0,
+      overrideFile: false,
       crfValue: exportInfo.crfValue!,
       bufSize: (exportInfo.targetBitrate || 0) * 2,
       inputFilepath: videoFile()!,
@@ -134,15 +136,20 @@ export default function Export() {
     };
 
     const fileExists = await exists(settings.outputFilepath);
-    if (fileExists)
-      if (
-        !(await ask("A file with the same name already exists at this location. Would you like to replace it?", {
-          title: "File Conflict",
-          kind: "info",
-          okLabel: "Replace",
-        }))
-      )
+
+    if (fileExists) {
+      const overridePrompt = await ask("A file with the same name already exists at this location. Would you like to replace it?", {
+        title: "File Conflict",
+        kind: "info",
+        okLabel: "Replace",
+      });
+
+      if (!overridePrompt) {
         return;
+      } else {
+        settings.overrideFile = true;
+      }
+    }
 
     render(
       settings,
@@ -315,6 +322,7 @@ export default function Export() {
                   type="number"
                   name="target-bitrate"
                   id="target-bitrate"
+                  value={mediaData() != null ? round((mediaData()!.size * 8) / mediaData()!.duration / 1000, 0) : ""}
                   onInput={(e) => setExportInfo("targetBitrate", e.target.valueAsNumber)}
                   required
                   disabled={exportInfo.limitSize}

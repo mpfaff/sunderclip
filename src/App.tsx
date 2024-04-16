@@ -8,14 +8,14 @@ import AudioMixer from "./components/audio_panel/AudioMixer";
 
 import AppProvider from "./contexts/AppContext";
 import PlayerProvider from "./contexts/PlayerContext";
-import ExportOverlay from "./components/export_overlay/ExportOverlay";
+import ExportOverlayContainer from "./components/export_overlay/ExportOverlayContainer";
 
 function App() {
   return (
     <AppProvider>
       <main class={styles.app}>
         <Welcome />
-        <ExportOverlay />
+        <ExportOverlayContainer />
 
         <PlayerProvider>
           <div class={styles.app__top}>

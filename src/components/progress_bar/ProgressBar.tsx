@@ -3,6 +3,7 @@ import styles from "./ProgressBar.module.css";
 
 export default function LoadingBar({
   value,
+  done,
   min,
   max,
   name,
@@ -10,6 +11,7 @@ export default function LoadingBar({
   scaleOrigin,
 }: {
   value: (() => number) | Accessor<number>;
+  done: (() => boolean) | Accessor<boolean>;
   name: string;
   min: number;
   max: number;
@@ -21,7 +23,7 @@ export default function LoadingBar({
       <span class={styles.bar__text}>{value()}%</span>
       <div
         class={styles.bar__progress}
-        style={`--progress: ${value()}%; --origin: ${scaleOrigin || "left"}; --fill: ${fillColor}`}
+        style={`--progress: ${value()}%; --origin: ${scaleOrigin || "left"}; --fill: ${fillColor}; --state: ${done() ? "hidden" : "visible"}`}
         role="meter"
         aria-label={name}
         aria-valuenow={value()}

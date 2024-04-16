@@ -3,14 +3,31 @@ import { ProgressData, RawProgress, RenderMeta, RenderSettings, RenderSizeLimit 
 import { remove, stat } from "@tauri-apps/plugin-fs";
 import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
 import { VideoCodecs } from "../components/export_panel/Codecs";
+import { Accessor, Setter, createSignal } from "solid-js";
+import { SetStoreFunction, createStore } from "solid-js/store";
+
+type ProgressStore = {
+  errored: boolean;
+  errorMsg: string | null;
+  percentage: number;
+  currentTimeMs: number;
+  fps: number;
+  eta: null | Date;
+  speed: number;
+  done: boolean;
+};
 
 export default class Renderer {
   private settings: RenderSettings & { codecRateControl: string[] };
   private sizeLimit: RenderSizeLimit | null;
   private meta: RenderMeta;
-  private lastProgress: ProgressData | undefined;
 
-  private _currentAttempt = 0;
+  readonly progress: ProgressStore;
+  private setProgress: SetStoreFunction<ProgressStore>;
+
+  readonly currentAttempt: Accessor<number>;
+  private setCurrentAttempt: Setter<number>;
+
   private currentRenderId: number | undefined;
 
   private progressUnlistener: UnlistenFn | undefined;
@@ -45,6 +62,18 @@ export default class Renderer {
   }
 
   constructor(settings: RenderSettings, sizeLimit: RenderSizeLimit | null, meta: RenderMeta) {
+    [this.currentAttempt, this.setCurrentAttempt] = createSignal(0);
+    [this.progress, this.setProgress] = createStore<ProgressStore>({
+      errored: false,
+      errorMsg: null,
+      percentage: 0,
+      currentTimeMs: 0,
+      fps: 0,
+      eta: null,
+      speed: 1,
+      done: false,
+    });
+
     if (sizeLimit != null) {
       const duration = settings.trimEnd - settings.trimStart;
       const theoreticalConstantBitrateKbps = ((sizeLimit.maxSize * 8) / duration) * 1000;
@@ -61,9 +90,6 @@ export default class Renderer {
     console.log(this.settings, this.sizeLimit);
   }
 
-  get currentAttempt() {
-    return this._currentAttempt;
-  }
   get maxAttempts() {
     return this.sizeLimit != null ? this.sizeLimit.maxAttempts : 1;
   }
@@ -78,22 +104,14 @@ export default class Renderer {
   handleProgress(data: Event<string>) {
     const lines = data.payload;
 
-    const progress: ProgressData = this.lastProgress || {
-      errored: false,
-      percentage: 0,
-      currentTimeMs: 0,
-      fps: 0,
-      eta: null,
-      speed: 1,
-      done: false,
-    };
+    const newProgress: ProgressData = Object.assign({}, this.progress);
 
     if (lines.startsWith(Renderer.errorPrefix)) {
-      alert(lines.slice(Renderer.errorPrefix.length));
-      progress.errored = true;
+      newProgress.errored = true;
+      newProgress.errorMsg = lines.slice(Renderer.errorPrefix.length);
     }
 
-    if (!progress.errored) {
+    if (!newProgress.errored) {
       lines.split("\n").forEach((property) => {
         const [name, value] = property.split("=") as [keyof RawProgress, string];
         const validValue = value !== "N/A";
@@ -102,39 +120,39 @@ export default class Renderer {
 
         switch (name) {
           case "out_time_us": {
-            progress.currentTimeMs = Number(value) / 1000;
-            progress.percentage = progress.currentTimeMs / 1000 / this.meta.totalDuration;
+            newProgress.currentTimeMs = Number(value) / 1000;
+            newProgress.percentage = newProgress.currentTimeMs / 1000 / this.meta.totalDuration;
             break;
           }
           case "speed": {
-            progress.speed = parseFloat(value);
-            progress.eta = new Date(Date.now() + (this.meta.totalDuration * 1000 - progress.currentTimeMs) / progress.speed);
+            newProgress.speed = parseFloat(value);
+            newProgress.eta = new Date(Date.now() + (this.meta.totalDuration * 1000 - newProgress.currentTimeMs) / newProgress.speed);
             break;
           }
           case "fps": {
-            progress.fps = parseFloat(value);
+            newProgress.fps = parseFloat(value);
             break;
           }
           case "progress": {
-            progress.done = value === "end" ? true : false;
-            if (progress.done) progress.percentage = 1;
+            newProgress.done = value === "end" ? true : false;
+            if (newProgress.done) newProgress.percentage = 1;
           }
         }
       });
     }
 
-    this.lastProgress = progress;
+    this.setProgress(newProgress);
 
     for (const listener of this.listeners.values()) {
-      listener(progress);
+      listener(newProgress);
     }
 
-    if (progress.errored) {
+    if (newProgress.errored) {
       this.cleanup();
       return;
     }
 
-    if (progress.done) this.postRender();
+    if (newProgress.done) this.postRender();
   }
 
   addProgressListener(callback: (data: ProgressData) => void) {
@@ -151,7 +169,7 @@ export default class Renderer {
   }
 
   async render(): Promise<void> {
-    this._currentAttempt++;
+    this.setCurrentAttempt((prev) => ++prev);
 
     try {
       const id = await invoke<number>("start_render", this.settings);
@@ -180,24 +198,8 @@ export default class Renderer {
       const file = await stat(this.settings.outputFilepath);
       const adjusted = this.adjustSettings(file.size);
 
-      if (adjusted && this._currentAttempt < this.sizeLimit.maxAttempts) {
-        // FFMPEG retains a file lock for some time after finishing, keep attempting until successful
-        await new Promise<void>((resolve, reject) => {
-          let attempts = 0;
-
-          const attemptRemove = setInterval(async () => {
-            if (attempts > 10) reject();
-
-            try {
-              await remove(this.settings.outputFilepath);
-
-              clearInterval(attemptRemove);
-              resolve();
-            } catch {}
-
-            attempts++;
-          }, 1000);
-        });
+      if (adjusted && this.currentAttempt() < this.sizeLimit.maxAttempts) {
+        await remove(this.settings.outputFilepath);
 
         this.render();
 
