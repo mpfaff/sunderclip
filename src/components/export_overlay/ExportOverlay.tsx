@@ -38,7 +38,7 @@ export default function ExportOverlay() {
             max={100}
             min={0}
             value={() => round((renderer()?.progress.percentage || 0) * 100)}
-            done={() => renderer()?.progress.errored == true || renderer()?.progress.done == true}
+            done={() => renderer()?.progress.finished == true}
           />
 
           <div class={styles.export__info}>
@@ -49,22 +49,22 @@ export default function ExportOverlay() {
           </div>
 
           <div class={styles.export__btns}>
+            <button
+              class={styles.export_btn}
+              onClick={async () => {
+                await invoke<void>("show_in_folder", { path: renderData.renderer!.outputFilepath });
+              }}
+            >
+              Open Folder
+            </button>
             <Show
-              when={!renderer()?.progress.errored && !renderer()?.progress.done}
+              when={!renderer()?.progress.finished}
               fallback={
                 <button class={styles.export_btn} onClick={close}>
                   {renderer()?.progress.errored ? "Close" : "Finish"}
                 </button>
               }
             >
-              <button
-                class={styles.export_btn}
-                onClick={async () => {
-                  await invoke<void>("show_in_folder", { path: renderData.renderer!.outputFilepath });
-                }}
-              >
-                Open Folder
-              </button>
               <button class={styles.export_btn}>Accept Current</button>
               <button
                 class={styles.export_btn}

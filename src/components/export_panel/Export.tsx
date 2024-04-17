@@ -419,7 +419,14 @@ export default function Export() {
             </div>
             <div class={styles.export__inputGroup}>
               <label for="max-attempts">Max attempts</label>
-              <input type="number" name="max-attempts" id="max-attempts" value={exportInfo.sizeLimitDetails.maxAttempts} required />
+              <input
+                type="number"
+                name="max-attempts"
+                id="max-attempts"
+                value={exportInfo.sizeLimitDetails.maxAttempts}
+                required
+                onInput={(e) => setExportInfo("sizeLimitDetails", "maxAttempts", e.target.valueAsNumber)}
+              />
             </div>
             <div class={styles.export__inputGroup}>
               <label for="retry-threshold">Retry Threshold (%)</label>
@@ -432,6 +439,7 @@ export default function Export() {
                 min="0"
                 max="1"
                 step="0.01"
+                onInput={(e) => setExportInfo("sizeLimitDetails", "retryThreshold", e.target.valueAsNumber)}
               />
             </div>
           </div>

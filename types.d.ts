@@ -251,14 +251,3 @@ export type RawProgress = {
   progress: "continue" | "end";
   bitrate: number;
 };
-
-export type ProgressData = {
-  errored: boolean;
-  errorMsg: string | null;
-  percentage: number;
-  currentTimeMs: number;
-  eta: Date | null;
-  fps: number;
-  speed: number;
-  done: boolean;
-};

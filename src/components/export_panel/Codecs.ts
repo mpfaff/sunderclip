@@ -20,7 +20,7 @@ export const VideoCodecs = {
       ],
       abr: ["-b:v", "{TARGET_BITRATE}k"],
       vbr: null,
-      crf: ["-crf", "CRF_VALUE"],
+      crf: ["-crf", "{CRF_VALUE}"],
     },
     crf: {
       default: 23,
@@ -38,7 +38,7 @@ export const VideoCodecs = {
       cbr: null,
       vbr: null,
       abr: ["-b:v", "{TARGET_BITRATE}k"],
-      crf: ["-crf", "CRF_VALUE"],
+      crf: ["-crf", "{CRF_VALUE}"],
     },
     crf: {
       default: 28,
@@ -56,7 +56,7 @@ export const VideoCodecs = {
       cbr: null,
       abr: ["-b:v", "{TARGET_BITRATE}k"],
       vbr: ["-b:v", "{TARGET_BITRATE}k", "-minrate", "{MIN_BITRATE}k", "-maxrate", "{MAX_BITRATE}k"],
-      crf: ["-crf", "CRF_VALUE"],
+      crf: ["-crf", "{CRF_VALUE}"],
     },
     crf: {
       default: 30,
@@ -88,7 +88,7 @@ export const VideoCodecs = {
       cbr: ["-b:v", "{TARGET_BITRATE}k", "-minrate", "{TARGET_BITRATE}k", "-maxrate", "{TARGET_BITRATE}k"],
       abr: ["-b:v", "{TARGET_BITRATE}k"],
       vbr: ["-b:v", "{TARGET_BITRATE}k", "-minrate", "{MIN_BITRATE}k", "-maxrate", "{MAX_BITRATE}k"],
-      crf: ["-crf", "CRF_VALUE", "-b:v", "0"],
+      crf: ["-crf", "{CRF_VALUE}", "-b:v", "0"],
     },
     crf: {
       default: 30,

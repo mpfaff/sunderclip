@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { ProgressData, RawProgress, RenderMeta, RenderSettings, RenderSizeLimit } from "../../types";
+import { RawProgress, RenderMeta, RenderSettings, RenderSizeLimit } from "../../types";
 import { remove, stat } from "@tauri-apps/plugin-fs";
 import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
 import { VideoCodecs } from "../components/export_panel/Codecs";
@@ -14,7 +14,8 @@ type ProgressStore = {
   fps: number;
   eta: null | Date;
   speed: number;
-  done: boolean;
+  doneCurrent: boolean;
+  finished: boolean;
 };
 
 export default class Renderer {
@@ -31,7 +32,7 @@ export default class Renderer {
   private currentRenderId: number | undefined;
 
   private progressUnlistener: UnlistenFn | undefined;
-  private listeners: Set<(data: ProgressData) => void> = new Set();
+  private listeners: Set<(data: ProgressStore) => void> = new Set();
 
   private static errorPrefix = "error:";
 
@@ -71,7 +72,8 @@ export default class Renderer {
       fps: 0,
       eta: null,
       speed: 1,
-      done: false,
+      doneCurrent: false,
+      finished: false,
     });
 
     if (sizeLimit != null) {
@@ -104,7 +106,7 @@ export default class Renderer {
   handleProgress(data: Event<string>) {
     const lines = data.payload;
 
-    const newProgress: ProgressData = Object.assign({}, this.progress);
+    const newProgress: ProgressStore = Object.assign({}, this.progress);
 
     if (lines.startsWith(Renderer.errorPrefix)) {
       newProgress.errored = true;
@@ -134,8 +136,8 @@ export default class Renderer {
             break;
           }
           case "progress": {
-            newProgress.done = value === "end" ? true : false;
-            if (newProgress.done) newProgress.percentage = 1;
+            newProgress.doneCurrent = value === "end" ? true : false;
+            if (newProgress.doneCurrent) newProgress.percentage = 1;
           }
         }
       });
@@ -152,20 +154,15 @@ export default class Renderer {
       return;
     }
 
-    if (newProgress.done) this.postRender();
+    if (newProgress.doneCurrent) this.postRender();
   }
 
-  addProgressListener(callback: (data: ProgressData) => void) {
+  addProgressListener(callback: (data: ProgressStore) => void) {
     this.listeners.add(callback);
   }
 
-  removeProgressListener(callback: (data: ProgressData) => void) {
+  removeProgressListener(callback: (data: ProgressStore) => void) {
     this.listeners.delete(callback);
-  }
-
-  cleanup() {
-    this.listeners.clear();
-    this.progressUnlistener!();
   }
 
   async render(): Promise<void> {
@@ -212,5 +209,11 @@ export default class Renderer {
 
   async cancelRender() {
     const cancelled = await invoke<boolean>("cancel_render", { taskId: this.currentRenderId });
+  }
+
+  cleanup() {
+    this.setProgress("finished", true);
+    this.listeners.clear();
+    this.progressUnlistener!();
   }
 }
