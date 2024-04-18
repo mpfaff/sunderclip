@@ -6,6 +6,13 @@ import { VideoCodecs } from "../components/export_panel/Codecs";
 import { Accessor, Setter, createSignal } from "solid-js";
 import { SetStoreFunction, createStore } from "solid-js/store";
 
+export enum RenderState {
+  LOADING,
+  RENDERING,
+  VALIDATING,
+  FINISHED,
+}
+
 type ProgressStore = {
   errored: boolean;
   errorMsg: string | null;
@@ -14,8 +21,8 @@ type ProgressStore = {
   fps: number;
   eta: null | Date;
   speed: number;
+  state: RenderState;
   doneCurrent: boolean;
-  finished: boolean;
 };
 
 export default class Renderer {
@@ -28,6 +35,17 @@ export default class Renderer {
 
   readonly currentAttempt: Accessor<number>;
   private setCurrentAttempt: Setter<number>;
+
+  private bestAttempt = {
+    size: Infinity,
+    minBitrate: 0,
+    targetBitrate: 0,
+    maxBitrate: 0,
+  };
+  private lastPercentDiff = 0;
+  private store = {
+    maxSetBitrate: 0,
+  };
 
   private currentRenderId: number | undefined;
 
@@ -73,7 +91,7 @@ export default class Renderer {
       eta: null,
       speed: 1,
       doneCurrent: false,
-      finished: false,
+      state: RenderState.LOADING,
     });
 
     if (sizeLimit != null) {
@@ -137,6 +155,7 @@ export default class Renderer {
           }
           case "progress": {
             newProgress.doneCurrent = value === "end" ? true : false;
+            if (newProgress.state === RenderState.LOADING) newProgress.state = RenderState.RENDERING;
             if (newProgress.doneCurrent) newProgress.percentage = 1;
           }
         }
@@ -166,6 +185,8 @@ export default class Renderer {
   }
 
   async render(): Promise<void> {
+    this.setProgress("state", RenderState.LOADING);
+    this.setProgress("percentage", 0);
     this.setCurrentAttempt((prev) => ++prev);
 
     try {
@@ -178,21 +199,43 @@ export default class Renderer {
   }
 
   private adjustSettings(resultantSize: number) {
-    const percentDiff = 1 - resultantSize / (this.sizeLimit!.maxSize * 1e6);
+    if (resultantSize > this.sizeLimit!.maxSize * 1e6) {
+      this.store.maxSetBitrate = Math.min(this.store.maxSetBitrate, this.settings.maxBitrate);
+    }
 
-    if (percentDiff >= 0 && percentDiff < this.sizeLimit!.retryThreshold) return false;
+    // > 0 : over size limit
+    // < 0 : under size limit
+    const percentDiff = resultantSize / (this.sizeLimit!.maxSize * 1e6) - 1;
 
-    this.settings.targetBitrate += this.settings.targetBitrate * percentDiff;
-    this.settings.maxBitrate += this.settings.maxBitrate * percentDiff;
+    if (percentDiff <= 0 && -percentDiff < this.sizeLimit!.retryThreshold) return false;
+
+    // const multiplier = 2 ** (5 * Math.abs(Math.abs(this.lastPercentDiff) - Math.abs(percentDiff)));
+    const multiplier = 1;
+    this.settings.targetBitrate = Math.min(this.store.maxSetBitrate, this.settings.targetBitrate - this.settings.targetBitrate * percentDiff * multiplier);
+    this.settings.maxBitrate = Math.min(this.store.maxSetBitrate, this.settings.maxBitrate - this.settings.maxBitrate * percentDiff * multiplier);
 
     this.settings.codecRateControl = Renderer.generateRateControlCmd(this.settings);
+
+    this.lastPercentDiff = percentDiff;
+
+    console.log(`Multiplier: ${multiplier}, Targe4tti: ${this.settings.targetBitrate}, Max birtae: ${this.settings.maxBitrate}, Percent diff: ${percentDiff}`);
 
     return true;
   }
 
   async postRender() {
     if (this.sizeLimit != null) {
+      this.setProgress("state", RenderState.VALIDATING);
+
       const file = await stat(this.settings.outputFilepath);
+
+      if (file.size < this.bestAttempt.size && file.size < this.sizeLimit.maxSize) {
+        this.bestAttempt.size = file.size;
+        this.bestAttempt.targetBitrate = this.settings.targetBitrate;
+        this.bestAttempt.maxBitrate = this.settings.maxBitrate;
+        this.bestAttempt.minBitrate = this.settings.minBitrate;
+      }
+
       const adjusted = this.adjustSettings(file.size);
 
       if (adjusted && this.currentAttempt() < this.sizeLimit.maxAttempts) {
@@ -212,7 +255,7 @@ export default class Renderer {
   }
 
   cleanup() {
-    this.setProgress("finished", true);
+    this.setProgress("state", RenderState.FINISHED);
     this.listeners.clear();
     this.progressUnlistener!();
   }
