@@ -72,7 +72,7 @@ export default function ExportOverlay() {
               when={!(renderer()?.progress.state === RenderState.FINISHED)}
               fallback={
                 <button class={styles.export_btn} onClick={close}>
-                  {renderer()?.progress.errored ? "Close" : "Finish"}
+                  {renderer()?.progress.errored ? "Close" : "Done"}
                 </button>
               }
             >

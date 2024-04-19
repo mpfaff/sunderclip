@@ -12,6 +12,10 @@ export function round(number: number, places = 2) {
   return Math.round(number * accuracy) / accuracy;
 }
 
+export function minmax(min: number, number: number, max: number) {
+  return Math.min(max, Math.max(number, min));
+}
+
 export function formatSeconds(seconds: number, framerate?: number) {
   const isFrames = framerate != null;
 

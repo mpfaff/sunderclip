@@ -43,8 +43,9 @@ export default class Renderer {
     maxBitrate: 0,
   };
   private lastPercentDiff = 0;
-  private store = {
-    maxSetBitrate: 0,
+  private memory = {
+    maxSetBitrate: Infinity,
+    minSetBitrate: 0,
   };
 
   private currentRenderId: number | undefined;
@@ -199,26 +200,42 @@ export default class Renderer {
   }
 
   private adjustSettings(resultantSize: number) {
-    if (resultantSize > this.sizeLimit!.maxSize * 1e6) {
-      this.store.maxSetBitrate = Math.min(this.store.maxSetBitrate, this.settings.maxBitrate);
-    }
+    console.log(resultantSize / 1e6);
 
+    const maxSizeBytes = this.sizeLimit!.maxSize * 1e6;
     // > 0 : over size limit
     // < 0 : under size limit
-    const percentDiff = resultantSize / (this.sizeLimit!.maxSize * 1e6) - 1;
+    const percentDiff = resultantSize / maxSizeBytes - 1;
 
     if (percentDiff <= 0 && -percentDiff < this.sizeLimit!.retryThreshold) return false;
 
-    // const multiplier = 2 ** (5 * Math.abs(Math.abs(this.lastPercentDiff) - Math.abs(percentDiff)));
-    const multiplier = 1;
-    this.settings.targetBitrate = Math.min(this.store.maxSetBitrate, this.settings.targetBitrate - this.settings.targetBitrate * percentDiff * multiplier);
-    this.settings.maxBitrate = Math.min(this.store.maxSetBitrate, this.settings.maxBitrate - this.settings.maxBitrate * percentDiff * multiplier);
+    if (resultantSize > maxSizeBytes) {
+      this.memory.maxSetBitrate = Math.min(this.memory.maxSetBitrate, this.settings.maxBitrate);
+    }
+    if (resultantSize < maxSizeBytes) this.memory.minSetBitrate = this.settings.targetBitrate;
+
+    const multiplier = Math.sqrt(69 * Math.abs(Math.abs(this.lastPercentDiff) - Math.abs(percentDiff))) + 1;
+    if (this.memory.maxSetBitrate !== Infinity && this.memory.minSetBitrate !== 0) {
+      this.settings.targetBitrate = this.settings.targetBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier;
+      this.settings.maxBitrate = this.settings.maxBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier;
+    } else {
+      this.settings.targetBitrate = Math.min(
+        this.memory.maxSetBitrate,
+        Math.max(this.settings.targetBitrate - this.settings.targetBitrate * percentDiff * multiplier, this.memory.minSetBitrate)
+      );
+      this.settings.maxBitrate = Math.min(
+        this.memory.maxSetBitrate,
+        Math.max(this.settings.maxBitrate - this.settings.maxBitrate * percentDiff * multiplier, this.memory.minSetBitrate)
+      );
+    }
 
     this.settings.codecRateControl = Renderer.generateRateControlCmd(this.settings);
 
     this.lastPercentDiff = percentDiff;
 
-    console.log(`Multiplier: ${multiplier}, Targe4tti: ${this.settings.targetBitrate}, Max birtae: ${this.settings.maxBitrate}, Percent diff: ${percentDiff}`);
+    console.log(
+      `Multiplier: ${multiplier}, Target: ${this.settings.targetBitrate}, Min mem: ${this.memory.minSetBitrate}, Max mem: ${this.memory.maxSetBitrate} Percent diff: ${percentDiff}`
+    );
 
     return true;
   }
@@ -251,7 +268,7 @@ export default class Renderer {
   }
 
   async cancelRender() {
-    const cancelled = await invoke<boolean>("cancel_render", { taskId: this.currentRenderId });
+    return await invoke<boolean>("cancel_render", { taskId: this.currentRenderId });
   }
 
   cleanup() {
