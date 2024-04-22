@@ -14,6 +14,7 @@ const stateMap = new Map<RenderState, string>([
   [RenderState.LOADING, "Preparing render..."],
   [RenderState.RENDERING, "Rendering..."],
   [RenderState.VALIDATING, "Checking file size..."],
+  [RenderState.ERRORED, "Render failed."],
   [RenderState.FINISHED, "Render completed."],
 ]);
 
@@ -51,8 +52,8 @@ export default function ExportOverlay() {
 
           <div class={styles.export__info}>
             <p>ETA: {renderer()?.progress.eta == null ? "..." : timeToEta()}</p>
-            <Show when={renderer()?.progress.errored}>
-              <p>Error: {}</p>
+            <Show when={renderer()?.progress.state === RenderState.ERRORED}>
+              <p>Error: {renderer()?.progress.errorMsg}</p>
             </Show>
           </div>
 
@@ -69,10 +70,10 @@ export default function ExportOverlay() {
               Open Folder
             </button>
             <Show
-              when={!(renderer()?.progress.state === RenderState.FINISHED)}
+              when={renderer()?.progress.state !== RenderState.FINISHED && renderer()?.progress.state !== RenderState.ERRORED}
               fallback={
                 <button class={styles.export_btn} onClick={close}>
-                  {renderer()?.progress.errored ? "Close" : "Done"}
+                  {renderer()?.progress.state !== RenderState.ERRORED ? "Done" : "Close"}
                 </button>
               }
             >

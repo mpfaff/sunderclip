@@ -67,6 +67,7 @@
         height: 100%;
         user-select: none;
         -webkit-user-select: none;
+        overflow: hidden;
       }
 
       .splashscreen {
@@ -78,6 +79,7 @@
         padding: 0.5em;
         text-align: center;
         text-shadow: 0 0 1.25rem rgba(0, 0, 0, 0.5);
+        overflow: hidden;
       }
 
       .splashscreen__title {
@@ -99,6 +101,18 @@
         mask: url("/images/loading.svg") no-repeat center;
         width: 4rem;
         height: 4rem;
+      }
+
+      .splashscreen__logo-image {
+        position: absolute;
+        z-index: -1;
+        filter: blur(2px);
+        height: 125%;
+        transform: translate(30%, 5%);
+        mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.03) 45%, rgba(0, 0, 0, 0.1));
+        aspect-ratio: 1 / 1;
+        right: 0;
+        pointer-events: none;
       }
 
       @media (prefers-color-scheme: dark) {
@@ -127,6 +141,7 @@
       <div class="splashscreen__loader">
         <div role="img" class="splashscreen__loader-img" aria-label="Loading animation"></div>
       </div>
+      <img src="/images/logo512.png" alt="Logo" class="splashscreen__logo-image" />
     </div>
   </body>
 </html>

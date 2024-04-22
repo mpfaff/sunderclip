@@ -5,16 +5,17 @@ import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
 import { VideoCodecs } from "../components/export_panel/Codecs";
 import { Accessor, Setter, createSignal } from "solid-js";
 import { SetStoreFunction, createStore } from "solid-js/store";
+import { minmax } from "../util";
 
 export enum RenderState {
   LOADING,
   RENDERING,
   VALIDATING,
+  ERRORED,
   FINISHED,
 }
 
 type ProgressStore = {
-  errored: boolean;
   errorMsg: string | null;
   percentage: number;
   currentTimeMs: number;
@@ -84,7 +85,6 @@ export default class Renderer {
   constructor(settings: RenderSettings, sizeLimit: RenderSizeLimit | null, meta: RenderMeta) {
     [this.currentAttempt, this.setCurrentAttempt] = createSignal(0);
     [this.progress, this.setProgress] = createStore<ProgressStore>({
-      errored: false,
       errorMsg: null,
       percentage: 0,
       currentTimeMs: 0,
@@ -128,11 +128,12 @@ export default class Renderer {
     const newProgress: ProgressStore = Object.assign({}, this.progress);
 
     if (lines.startsWith(Renderer.errorPrefix)) {
-      newProgress.errored = true;
+      newProgress.state = RenderState.ERRORED;
+      console.log(lines);
       newProgress.errorMsg = lines.slice(Renderer.errorPrefix.length);
     }
 
-    if (!newProgress.errored) {
+    if (newProgress.state !== RenderState.ERRORED) {
       lines.split("\n").forEach((property) => {
         const [name, value] = property.split("=") as [keyof RawProgress, string];
         const validValue = value !== "N/A";
@@ -169,7 +170,7 @@ export default class Renderer {
       listener(newProgress);
     }
 
-    if (newProgress.errored) {
+    if (newProgress.state === RenderState.ERRORED) {
       this.cleanup();
       return;
     }
@@ -216,8 +217,16 @@ export default class Renderer {
 
     const multiplier = Math.sqrt(69 * Math.abs(Math.abs(this.lastPercentDiff) - Math.abs(percentDiff))) + 1;
     if (this.memory.maxSetBitrate !== Infinity && this.memory.minSetBitrate !== 0) {
-      this.settings.targetBitrate = this.settings.targetBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier;
-      this.settings.maxBitrate = this.settings.maxBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier;
+      this.settings.targetBitrate = minmax(
+        this.memory.minSetBitrate,
+        this.settings.targetBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier,
+        this.memory.maxSetBitrate
+      );
+      this.settings.maxBitrate = minmax(
+        this.memory.minSetBitrate,
+        this.settings.maxBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier,
+        this.memory.maxSetBitrate
+      );
     } else {
       this.settings.targetBitrate = Math.min(
         this.memory.maxSetBitrate,
@@ -272,7 +281,7 @@ export default class Renderer {
   }
 
   cleanup() {
-    this.setProgress("state", RenderState.FINISHED);
+    if (this.progress.state !== RenderState.ERRORED) this.setProgress("state", RenderState.FINISHED);
     this.listeners.clear();
     this.progressUnlistener!();
   }

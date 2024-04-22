@@ -6,7 +6,7 @@ use std::{
 
 use tauri::{Manager, Window};
 use tokio::{
-    io::{AsyncBufReadExt, BufReader},
+    io::{AsyncBufReadExt, AsyncReadExt, BufReader},
     process::Command,
     sync::Mutex,
 };
@@ -93,20 +93,26 @@ pub async fn start_render(
     }
     tokio::task::spawn(async move {
         let result = async {
+            let mut stderr = String::new();
+            let mut lines = String::new();
+
             let mut child = command
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(Stdio::piped())
+                // .stderr(Stdio::piped())
                 .spawn()
                 .map_err(|e| e.to_string())?;
 
             let mut reader = BufReader::new(child.stdout.take().unwrap());
-            let mut lines = String::new();
+            // let _ = child.stderr.take().unwrap().read_to_string(&mut stderr);
+            reader.read_to_string(&mut stderr);
 
             const PROGRESS_LINES: u8 = 12;
             let mut current_line: u8 = 0;
 
             loop {
                 let read_line = reader.read_line(&mut lines);
+
                 tokio::select! {
                     result = read_line => {
                         if result.map_err(|e| e.to_string())? == 0 {
@@ -117,10 +123,7 @@ pub async fn start_render(
 
                         if current_line >= PROGRESS_LINES {
                             if lines.contains("progress=end") {
-                                let status = child.wait().await.map_err(|e| e.to_string())?;
-                                if !status.success() {
-                                    return Err(format!("Not ok: {status}"));
-                                }
+                                continue;
                             }
                             window.emit("export_progress", &lines).unwrap();
 
@@ -135,6 +138,13 @@ pub async fn start_render(
                     }
                 }
             }
+
+            let status = child.wait().await.map_err(|e| e.to_string())?;
+            if !status.success() {
+                return Err(format!("{status}\n{stderr}"));
+            }
+
+            window.emit("export_progress", "progress=end").unwrap();
 
             Ok::<_, String>(())
         }
