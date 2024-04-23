@@ -93,55 +93,62 @@ pub async fn start_render(
     }
     tokio::task::spawn(async move {
         let result = async {
-            let mut stderr = String::new();
+            let mut stderr_buf = String::new();
             let mut lines = String::new();
 
             let mut child = command
                 .creation_flags(CREATE_NO_WINDOW)
                 .stdout(Stdio::piped())
-                // .stderr(Stdio::piped())
+                .stderr(Stdio::piped())
                 .spawn()
                 .map_err(|e| e.to_string())?;
 
             let mut reader = BufReader::new(child.stdout.take().unwrap());
-            // let _ = child.stderr.take().unwrap().read_to_string(&mut stderr);
-            reader.read_to_string(&mut stderr);
+            let mut child_stderr = child.stderr.take().unwrap();
+            let stderr_future = child_stderr.read_to_string(&mut stderr_buf);
 
-            const PROGRESS_LINES: u8 = 12;
-            let mut current_line: u8 = 0;
+            let main_future = async {
+                const PROGRESS_LINES: u8 = 12;
+                let mut current_line: u8 = 0;
 
-            loop {
-                let read_line = reader.read_line(&mut lines);
+                loop {
+                    let read_line = reader.read_line(&mut lines);
 
-                tokio::select! {
-                    result = read_line => {
-                        if result.map_err(|e| e.to_string())? == 0 {
-                            break;
-                        }
-
-                        current_line += 1;
-
-                        if current_line >= PROGRESS_LINES {
-                            if lines.contains("progress=end") {
-                                continue;
+                    tokio::select! {
+                        result = read_line => {
+                            if result.map_err(|e| e.to_string())? == 0 {
+                                break;
                             }
-                            window.emit("export_progress", &lines).unwrap();
 
-                            lines.clear();
-                            current_line = 0;
+                            current_line += 1;
+
+                            if current_line >= PROGRESS_LINES {
+                                if lines.contains("progress=end") {
+                                    continue;
+                                }
+                                window.emit("export_progress", &lines).unwrap();
+
+                                lines.clear();
+                                current_line = 0;
+                            }
                         }
-                    }
-                    _ = &mut rx => {
-                        window.emit("export_progress", format!("cancelled")).unwrap();
+                        _ = &mut rx => {
+                            window.emit("export_progress", format!("cancelled")).unwrap();
 
-                        return Err("Cancelled".into());
+                            return Err("Cancelled".into());
+                        }
                     }
                 }
-            }
 
-            let status = child.wait().await.map_err(|e| e.to_string())?;
+                child.wait().await.map_err(|e| e.to_string())
+            };
+
+            let (result1, result2) = tokio::join!(stderr_future, main_future);
+            result1.map_err(|e| e.to_string())?;
+            let status = result2?;
+
             if !status.success() {
-                return Err(format!("{status}\n{stderr}"));
+                return Err(format!("{status}\n{stderr_buf}"));
             }
 
             window.emit("export_progress", "progress=end").unwrap();
