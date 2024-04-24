@@ -129,7 +129,6 @@ export default class Renderer {
 
     if (lines.startsWith(Renderer.errorPrefix)) {
       newProgress.state = RenderState.ERRORED;
-      console.log(lines);
       newProgress.errorMsg = lines.slice(Renderer.errorPrefix.length);
     }
 
@@ -200,7 +199,7 @@ export default class Renderer {
     }
   }
 
-  private adjustSettings(resultantSize: number) {
+  private adjustSettings(resultantSize: number, finalAttempt: boolean) {
     console.log(resultantSize / 1e6);
 
     const maxSizeBytes = this.sizeLimit!.maxSize * 1e6;
@@ -216,26 +215,35 @@ export default class Renderer {
     if (resultantSize < maxSizeBytes) this.memory.minSetBitrate = this.settings.targetBitrate;
 
     const multiplier = Math.sqrt(69 * Math.abs(Math.abs(this.lastPercentDiff) - Math.abs(percentDiff))) + 1;
-    if (this.memory.maxSetBitrate !== Infinity && this.memory.minSetBitrate !== 0) {
-      this.settings.targetBitrate = minmax(
-        this.memory.minSetBitrate,
-        this.settings.targetBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier,
-        this.memory.maxSetBitrate
-      );
-      this.settings.maxBitrate = minmax(
-        this.memory.minSetBitrate,
-        this.settings.maxBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier,
-        this.memory.maxSetBitrate
-      );
+
+    if (!finalAttempt) {
+      if (this.memory.maxSetBitrate !== Infinity && this.memory.minSetBitrate !== 0) {
+        this.settings.targetBitrate = minmax(
+          this.memory.minSetBitrate,
+          this.settings.targetBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier,
+          this.memory.maxSetBitrate
+        );
+        this.settings.maxBitrate = minmax(
+          this.memory.minSetBitrate,
+          this.settings.maxBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier,
+          this.memory.maxSetBitrate
+        );
+      } else {
+        this.settings.targetBitrate = minmax(
+          this.memory.maxSetBitrate,
+          this.settings.targetBitrate - this.settings.targetBitrate * percentDiff * multiplier,
+          this.memory.minSetBitrate
+        );
+        this.settings.maxBitrate = minmax(
+          this.memory.maxSetBitrate,
+          this.settings.maxBitrate - this.settings.maxBitrate * percentDiff * multiplier,
+          this.memory.minSetBitrate
+        );
+      }
     } else {
-      this.settings.targetBitrate = Math.min(
-        this.memory.maxSetBitrate,
-        Math.max(this.settings.targetBitrate - this.settings.targetBitrate * percentDiff * multiplier, this.memory.minSetBitrate)
-      );
-      this.settings.maxBitrate = Math.min(
-        this.memory.maxSetBitrate,
-        Math.max(this.settings.maxBitrate - this.settings.maxBitrate * percentDiff * multiplier, this.memory.minSetBitrate)
-      );
+      this.settings.maxBitrate = this.bestAttempt.maxBitrate;
+      this.settings.targetBitrate = this.bestAttempt.targetBitrate;
+      this.settings.minBitrate = this.bestAttempt.minBitrate;
     }
 
     this.settings.codecRateControl = Renderer.generateRateControlCmd(this.settings);
@@ -262,7 +270,7 @@ export default class Renderer {
         this.bestAttempt.minBitrate = this.settings.minBitrate;
       }
 
-      const adjusted = this.adjustSettings(file.size);
+      const adjusted = this.adjustSettings(file.size, this.currentAttempt() == this.maxAttempts - 1);
 
       if (adjusted && this.currentAttempt() < this.sizeLimit.maxAttempts) {
         await remove(this.settings.outputFilepath);

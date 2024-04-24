@@ -15,7 +15,9 @@
         "label": "sunderclip",
         "x": 0,
         "y": -10000,
-        "visible": false
+        "visible": false,
+        "additionalBrowserArgs": "--autoplay-policy=no-user-gesture-required",
+        "dragDropEnabled": true
       },
       {
         "title": "Sunderclip launching",

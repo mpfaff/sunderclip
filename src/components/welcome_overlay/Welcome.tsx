@@ -1,4 +1,4 @@
-import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
+import { Event, TauriEvent, UnlistenFn, listen } from "@tauri-apps/api/event";
 
 import Overlay from "../overlay/Overlay";
 import styles from "./Welcome.module.css";
@@ -22,7 +22,7 @@ export default function Welcome() {
   let unlistenFileDrop: UnlistenFn | undefined;
 
   onMount(async () => {
-    unlistenFileDropHover = await listen("tauri://file-drop-hover", async (event: Event<FileDropPayload>) => {
+    unlistenFileDropHover = await listen(TauriEvent.DRAG, async (event: Event<FileDropPayload>) => {
       const file = event.payload.paths[0];
       if (file == null) return;
 
@@ -32,9 +32,9 @@ export default function Welcome() {
       setHoveringValid(true);
     });
 
-    unlistenFileDropHoverCancel = await listen("tauri://file-drop-cancelled", () => setHovering(false));
+    unlistenFileDropHoverCancel = await listen(TauriEvent.DROP_CANCELLED, () => setHovering(false));
 
-    unlistenFileDrop = await listen("tauri://file-drop", async (event: Event<FileDropPayload>) => {
+    unlistenFileDrop = await listen(TauriEvent.DROP, async (event: Event<FileDropPayload>) => {
       setHovering(false);
 
       const file = event.payload.paths[0];

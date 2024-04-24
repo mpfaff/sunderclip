@@ -244,7 +244,15 @@ export default function Export() {
             </div>
             <div class={styles.export__inputGroup} style={{ "grid-area": "fps" }}>
               <label for="fps">Frame Rate</label>
-              <input type="number" name="fps" id="fps" value={exportInfo.fps || ""} required onInput={(e) => setExportInfo("fps", e.target.valueAsNumber)} />
+              <input
+                type="number"
+                name="fps"
+                id="fps"
+                value={exportInfo.fps || ""}
+                required
+                onInput={(e) => setExportInfo("fps", e.target.valueAsNumber)}
+                step="0.01"
+              />
             </div>
             <div class={styles.export__inputGroup} style={{ "grid-area": "v-codec" }}>
               <label for="video-codec">Video Codec</label>

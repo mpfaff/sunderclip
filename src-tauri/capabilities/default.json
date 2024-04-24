@@ -13,20 +13,24 @@
     "menu:default",
     "tray:default",
     "shell:allow-open",
-
     "window:allow-set-fullscreen",
-
     "dialog:allow-open",
     "dialog:allow-save",
     "dialog:allow-ask",
     "dialog:allow-confirm",
     "dialog:allow-message",
-
     "fs:default",
     "fs:allow-remove",
     {
       "identifier": "fs:scope",
-      "allow": [{ "path": "**" }]
-    }
+      "allow": [
+        {
+          "path": "**"
+        }
+      ]
+    },
+    "clipboard-manager:default",
+    "clipboard-manager:allow-write-text"
   ]
 }
+

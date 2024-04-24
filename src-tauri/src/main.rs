@@ -167,6 +167,7 @@ fn main() {
     );
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard_manager::init())
         .register_asynchronous_uri_scheme_protocol("extract-audio", {
             let runtime = Arc::clone(&runtime);
             move |_app, req, resp| {
