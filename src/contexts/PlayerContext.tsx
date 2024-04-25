@@ -32,18 +32,13 @@ export function usePlayerContext() {
 }
 
 export default function PlayerProvider(props: ComponentProps<"div">) {
-  const [{ videoElement, videoFile }] = useAppContext();
-  const userInteracted = createMemo((prev) => prev != null || videoFile() != null, null);
+  const [{ videoElement }] = useAppContext();
 
   const [currentTime, setCurrentTime] = createSignal(0);
   const [playing, setPlaying] = createSignal(false);
   const [audioTracks, setAudioTracks] = createStore<AudioTrack[]>([]);
 
   const audioContext = new AudioContext();
-
-  createEffect(() => {
-    console.log(userInteracted());
-  });
 
   function pause() {
     videoElement()!.pause();

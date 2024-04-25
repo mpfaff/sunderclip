@@ -9,7 +9,7 @@ import { onMount } from "solid-js";
 import { createAudioAnalyser } from "../audio_panel/AudioMixer";
 
 export default function Player() {
-  const [{ videoElement, videoFile }, { setVideoElement }] = useAppContext();
+  const [{ videoElement, videoFile, trim }, { setVideoElement }] = useAppContext();
   const [{ playing, audioContext }, { setCurrentTime, setPlaying, setAudioTracks, video }] = usePlayerContext();
 
   function updatePlaying(playing: boolean) {
@@ -21,6 +21,12 @@ export default function Player() {
     setCurrentTime(seconds);
 
     if (playing()) requestAnimationFrame(updateTime);
+  }
+
+  function jumpToTrim(start = true) {
+    const seconds = start ? trim.start : trim.end;
+    video.setTime(seconds);
+    setCurrentTime(seconds);
   }
 
   onMount(() => {
@@ -53,19 +59,19 @@ export default function Player() {
         ></video>
       </div>
       <div class={styles.player__btns}>
-        <button class={styles.player__btn} aria-label="Step backward">
+        <button class={styles.player__btn} aria-label="Step backward" data-capture-partial-focus>
           <i class="fa-sharp fa-regular fa-backward"></i>
         </button>
-        <button class={styles.player__btn} aria-label="Jump to start of trim">
+        <button class={styles.player__btn} aria-label="Jump to start of trim" onClick={() => jumpToTrim()} data-capture-partial-focus>
           <i class="fa-sharp fa-solid fa-backward-step"></i>
         </button>
-        <button class={styles.player__btn} onClick={video.togglePlayback} title={`${playing() ? "Pause" : "Resume"} video`}>
+        <button class={styles.player__btn} onClick={video.togglePlayback} title={`${playing() ? "Pause" : "Resume"} video`} data-capture-partial-focus>
           <i class={"fa-sharp fa-solid " + (playing() ? "fa-pause" : "fa-play")}></i>
         </button>
-        <button class={styles.player__btn} aria-label="Jump to end of trim">
+        <button class={styles.player__btn} aria-label="Jump to end of trim" onClick={() => jumpToTrim(false)} data-capture-partial-focus>
           <i class="fa-sharp fa-solid fa-forward-step"></i>
         </button>
-        <button class={styles.player__btn} aria-label="Step forward">
+        <button class={styles.player__btn} aria-label="Step forward" data-capture-partial-focus>
           <i class="fa-sharp fa-regular fa-forward"></i>
         </button>
       </div>

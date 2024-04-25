@@ -10,6 +10,7 @@ import { TrimRange } from "../../../types";
 import Menubar from "../../classes/Menubar";
 
 const capturingElements = new Set(["INPUT", "SELECT", "BUTTON"]);
+const partialCapturingEvents = new Set(["Space"]);
 
 export default function Timeline() {
   const [{ videoElement, mediaData, trim }, { setTrim }] = useAppContext();
@@ -31,6 +32,7 @@ export default function Timeline() {
     if (
       focusedElement != null &&
       focusedElement instanceof HTMLElement &&
+      !(focusedElement.dataset["capturePartialFocus"] != null && partialCapturingEvents.has(event.code)) &&
       (capturingElements.has(focusedElement.tagName) || focusedElement.dataset["captureFocus"] != null)
     )
       return;
@@ -230,7 +232,7 @@ export default function Timeline() {
                 class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_start}`}
                 style={`left: ${trimPos.start * 100}%`}
                 tabIndex={0}
-                data-capture-focus
+                data-capture-partial-focus
                 onPointerDown={handleTrimheadDown}
               ></div>
               <div
@@ -238,7 +240,7 @@ export default function Timeline() {
                 class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_end}`}
                 style={`left: ${trimPos.end * 100}%`}
                 tabIndex={0}
-                data-capture-focus
+                data-capture-partial-focus
                 onPointerDown={handleTrimheadDown}
               ></div>
             </div>
