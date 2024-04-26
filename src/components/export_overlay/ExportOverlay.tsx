@@ -36,7 +36,7 @@ export default function ExportOverlay() {
       <Overlay>
         <div class={styles.export}>
           <h2 class={styles.export__heading}>Exporting</h2>
-          <Show when={renderData.renderer?.maxAttempts || 0 > 1}>
+          <Show when={renderData.renderer?.maxAttempts ?? 0 > 1}>
             <p class={styles.export__attempt_text}>
               Attempt {renderData.renderer?.currentAttempt() ?? ""}/{renderData.renderer?.maxAttempts || ""}
             </p>

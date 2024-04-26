@@ -38,15 +38,15 @@ export default class Renderer {
   private setCurrentAttempt: Setter<number>;
 
   private bestAttempt = {
-    size: Infinity,
-    minBitrate: 0,
-    targetBitrate: 0,
-    maxBitrate: 0,
+    size: 0,
+    minBitrate: 0.1,
+    targetBitrate: 0.1,
+    maxBitrate: Infinity,
   };
-  private lastPercentDiff = 0;
+  private lastPercentDiff = 0.1;
   private memory = {
     maxSetBitrate: Infinity,
-    minSetBitrate: 0,
+    minSetBitrate: 0.1,
   };
 
   private currentRenderId: number | undefined;
@@ -230,16 +230,17 @@ export default class Renderer {
         );
       } else {
         this.settings.targetBitrate = minmax(
-          this.memory.maxSetBitrate,
+          this.memory.minSetBitrate,
           this.settings.targetBitrate - this.settings.targetBitrate * percentDiff * multiplier,
-          this.memory.minSetBitrate
+          this.memory.maxSetBitrate
         );
         this.settings.maxBitrate = minmax(
-          this.memory.maxSetBitrate,
+          this.memory.minSetBitrate,
           this.settings.maxBitrate - this.settings.maxBitrate * percentDiff * multiplier,
-          this.memory.minSetBitrate
+          this.memory.maxSetBitrate
         );
       }
+      this.lastPercentDiff = percentDiff;
     } else {
       this.settings.maxBitrate = this.bestAttempt.maxBitrate;
       this.settings.targetBitrate = this.bestAttempt.targetBitrate;
@@ -247,8 +248,6 @@ export default class Renderer {
     }
 
     this.settings.codecRateControl = Renderer.generateRateControlCmd(this.settings);
-
-    this.lastPercentDiff = percentDiff;
 
     console.log(
       `Multiplier: ${multiplier}, Target: ${this.settings.targetBitrate}, Min mem: ${this.memory.minSetBitrate}, Max mem: ${this.memory.maxSetBitrate} Percent diff: ${percentDiff}`
@@ -263,14 +262,14 @@ export default class Renderer {
 
       const file = await stat(this.settings.outputFilepath);
 
-      if (file.size < this.bestAttempt.size && file.size < this.sizeLimit.maxSize) {
+      if (file.size <= this.sizeLimit.maxSize && file.size > this.bestAttempt.size) {
         this.bestAttempt.size = file.size;
         this.bestAttempt.targetBitrate = this.settings.targetBitrate;
         this.bestAttempt.maxBitrate = this.settings.maxBitrate;
         this.bestAttempt.minBitrate = this.settings.minBitrate;
       }
 
-      const adjusted = this.adjustSettings(file.size, this.currentAttempt() == this.maxAttempts - 1);
+      const adjusted = this.adjustSettings(file.size, this.currentAttempt() == this.maxAttempts);
 
       if (adjusted && this.currentAttempt() < this.sizeLimit.maxAttempts) {
         await remove(this.settings.outputFilepath);
