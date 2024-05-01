@@ -82,6 +82,10 @@ h5 {
   margin-bottom: 0.5em;
 }
 
+ul {
+  list-style-type: none;
+}
+
 button {
   padding: 0.5em 0.8em;
   font-size: 1rem;
@@ -101,6 +105,7 @@ button:disabled,
 input:disabled {
   transition: opacity 0.2s ease;
   opacity: 0.65;
+  cursor: not-allowed;
 }
 
 input:focus-visible,
@@ -114,6 +119,7 @@ hr {
   height: 1px;
   background-color: hsl(var(--clr-neutral-200));
   border: none;
+  width: 100%;
 }
 
 input,

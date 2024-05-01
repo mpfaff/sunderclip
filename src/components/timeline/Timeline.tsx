@@ -2,7 +2,7 @@ import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import Panel from "../panel/Panel";
 
 import styles from "./Timeline.module.css";
-import { formatSeconds, round } from "../../util";
+import { formatSeconds, minmax, round } from "../../util";
 import { useAppContext } from "../../contexts/AppContext";
 import { usePlayerContext } from "../../contexts/PlayerContext";
 import { createStore } from "solid-js/store";
@@ -14,7 +14,7 @@ const partialCapturingEvents = new Set(["Space"]);
 
 export default function Timeline() {
   const [{ videoElement, mediaData, trim }, { setTrim }] = useAppContext();
-  const [{ currentTime, playing }, { setCurrentTime, setPlaying, video }] = usePlayerContext();
+  const [{ currentTime, playing }, { setCurrentTime, video }] = usePlayerContext();
 
   const [dragging, setDragging] = createSignal(false);
   const [trimDragging, setTrimDragging] = createStore<{ start: boolean; end: boolean; any: boolean }>({ start: false, end: false, any: false });
@@ -42,16 +42,26 @@ export default function Timeline() {
         video.togglePlayback();
         break;
       }
-      case "ArrowLeft": {
-        let multiplier = 1;
-        if (event.ctrlKey) multiplier = 4;
-        updateVideoTime(currentTime() - (1 / (mediaData()?.fps ?? 10)) * multiplier);
-        break;
-      }
+      case "ArrowLeft":
       case "ArrowRight": {
-        let multiplier = 1;
-        if (event.ctrlKey) multiplier = 4;
-        updateVideoTime(currentTime() + (1 / (mediaData()?.fps ?? 10)) * multiplier);
+        let multiplier = event.code === "ArrowLeft" ? -1 : 1;
+        if (event.ctrlKey) multiplier *= 4;
+        if (event.shiftKey) multiplier *= 8;
+
+        if (focusedElement?.id.startsWith("trimhead")) {
+          const isTrimStart = focusedElement!.id === "trimhead-start";
+          const trimheadName = isTrimStart ? "start" : "end";
+          const trimheadTime = isTrimStart ? trim.start : trim.end;
+
+          const duration = videoElement()!.duration;
+          const time = minmax(isTrimStart ? 0 : trim.start, trimheadTime + 0.05 * multiplier, !isTrimStart ? duration : trim.end);
+
+          setTrim(trimheadName, time);
+          setTrimPos(trimheadName, time / duration);
+        } else {
+          updateVideoTime(currentTime() + (1 / (mediaData()?.fps ?? 10)) * multiplier);
+        }
+
         break;
       }
       default:
@@ -93,7 +103,7 @@ export default function Timeline() {
     max = 1
   ) {
     const relativePos = mouseX - parentStartX;
-    const percentage = Math.max(min, Math.min(relativePos / parentWidth, max));
+    const percentage = minmax(min, relativePos / parentWidth, max);
 
     return { percentage };
   }
@@ -229,19 +239,23 @@ export default function Timeline() {
               </div>
               <div
                 id="trimhead-start"
+                role="slider"
                 class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_start}`}
                 style={`left: ${trimPos.start * 100}%`}
                 tabIndex={0}
                 data-capture-partial-focus
                 onPointerDown={handleTrimheadDown}
+                aria-label="Trim start slider"
               ></div>
               <div
                 id="trimhead-end"
+                role="slider"
                 class={`${styles.timeline__cursor} ${styles.timeline__trimhead} ${styles.timeline__trim_end}`}
                 style={`left: ${trimPos.end * 100}%`}
                 tabIndex={0}
                 data-capture-partial-focus
                 onPointerDown={handleTrimheadDown}
+                aria-label="Trim end slider"
               ></div>
             </div>
           </div>

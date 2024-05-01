@@ -12,7 +12,36 @@
   height: 100%;
   width: 100%;
   max-width: 400px;
-  max-height: 400px;
+  max-height: 450px;
+}
+
+.export__info {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.export__lastAttempts {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow-y: auto;
+  width: 100%;
+  scrollbar-width: thin;
+}
+
+.export__lastAttemptItem {
+  color: hsl(var(--clr-neutral-800));
+  border-bottom: 1px dashed hsl(var(--clr-neutral-200));
+  padding-bottom: 0.25em;
+  padding-left: 1em;
+  margin-bottom: 0.25em;
+  text-align: left;
+  font-size: 0.8rem;
+}
+
+.export__lastAttemptItem p:first-child {
+  margin-left: -1em;
 }
 
 .export__btns {

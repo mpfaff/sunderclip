@@ -5,7 +5,7 @@ import { Event, UnlistenFn, listen } from "@tauri-apps/api/event";
 import { VideoCodecs } from "../components/export_panel/Codecs";
 import { Accessor, Setter, createSignal } from "solid-js";
 import { SetStoreFunction, createStore } from "solid-js/store";
-import { minmax } from "../util";
+import { minmax, round } from "../util";
 
 export enum RenderState {
   LOADING,
@@ -26,6 +26,13 @@ type ProgressStore = {
   doneCurrent: boolean;
 };
 
+type Attempt = {
+  bitrate: number;
+  size: number;
+};
+
+type Attempts = Attempt[];
+
 export default class Renderer {
   private settings: RenderSettings & { codecRateControl: string[] };
   private sizeLimit: RenderSizeLimit | null;
@@ -36,6 +43,12 @@ export default class Renderer {
 
   readonly currentAttempt: Accessor<number>;
   private setCurrentAttempt: Setter<number>;
+
+  readonly useCurrentAttempt: Accessor<boolean>;
+  readonly setUseCurrentAttempt: Setter<boolean>;
+
+  readonly lastAttempts: Attempts;
+  private setLastAttempts: SetStoreFunction<Attempts>;
 
   private bestAttempt = {
     size: 0,
@@ -94,6 +107,8 @@ export default class Renderer {
       doneCurrent: false,
       state: RenderState.LOADING,
     });
+    [this.useCurrentAttempt, this.setUseCurrentAttempt] = createSignal(false);
+    [this.lastAttempts, this.setLastAttempts] = createStore<Attempts>([]);
 
     if (sizeLimit != null) {
       const duration = settings.trimEnd - settings.trimStart;
@@ -257,10 +272,15 @@ export default class Renderer {
   }
 
   async postRender() {
-    if (this.sizeLimit != null) {
+    if (this.sizeLimit != null && !this.useCurrentAttempt()) {
       this.setProgress("state", RenderState.VALIDATING);
 
       const file = await stat(this.settings.outputFilepath);
+
+      this.setLastAttempts(this.lastAttempts.length, {
+        bitrate: this.settings.targetBitrate,
+        size: round(file.size / 1e6),
+      });
 
       if (file.size <= this.sizeLimit.maxSize && file.size > this.bestAttempt.size) {
         this.bestAttempt.size = file.size;

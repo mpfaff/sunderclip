@@ -59,13 +59,17 @@ export default function AudioMixer() {
     setAudioMeters(result);
     if (isPlaying) requestAnimationFrame(updateAudioTracks);
   }
+  function zeroAudioMeters() {
+    setAudioMeters((prev) => new Array(prev.length).fill(0));
+  }
 
   createEffect(() => {
-    // Keep updating audio meters while playing
+    // Keep updating audio meters when playback resumes
     if (playing()) updateAudioTracks();
   });
 
   createEffect(() => {
+    // Mute respective track when triggered
     audioTracks.forEach((stream) => {
       stream.sourceElement.muted = stream.muted;
     });
@@ -74,6 +78,9 @@ export default function AudioMixer() {
   createEffect(() => {
     // Sync audio tracks to video
     const videoTime = currentTime();
+
+    // Unfortunately currentTime sometimes updates after playback is paused, causes bug where this runs
+    if (!playing()) zeroAudioMeters();
 
     audioTracks.slice(1).forEach((track) => {
       if (Math.abs(videoTime - track.sourceElement.currentTime) > MAX_AUDIO_DIFF) {
@@ -154,7 +161,7 @@ export default function AudioMixer() {
     if (videoFile() == null && audioTracks.length > 1) cleanup();
   });
 
-  onCleanup(() => cleanup());
+  onCleanup(cleanup);
 
   return (
     <Panel class={styles.audio_mixer} column>

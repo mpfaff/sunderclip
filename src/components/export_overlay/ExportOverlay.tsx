@@ -1,4 +1,4 @@
-import { Show } from "solid-js";
+import { For, Show } from "solid-js";
 import dayjs from "dayjs";
 
 import { useAppContext } from "../../contexts/AppContext";
@@ -31,12 +31,14 @@ export default function ExportOverlay() {
     setRenderData("rendering", false);
   }
 
+  const hasMultipleAttempts = () => (renderData.renderer?.maxAttempts ?? 0) > 1;
+
   return (
     <Show when={renderData.rendering}>
       <Overlay>
         <div class={styles.export}>
           <h2 class={styles.export__heading}>Exporting</h2>
-          <Show when={renderData.renderer?.maxAttempts ?? 0 > 1}>
+          <Show when={hasMultipleAttempts()}>
             <p class={styles.export__attempt_text}>
               Attempt {renderData.renderer?.currentAttempt() ?? ""}/{renderData.renderer?.maxAttempts || ""}
             </p>
@@ -73,10 +75,25 @@ export default function ExportOverlay() {
               </p>
             </Show>
           </div>
+          <hr />
+
+          <p>Previous attempts</p>
+          <ul class={styles.export__lastAttempts}>
+            <For each={renderData.renderer?.lastAttempts} fallback={<p>No attempts yet.</p>}>
+              {(attempt, i) => (
+                <li class={styles.export__lastAttemptItem}>
+                  <p>{hasMultipleAttempts() ? `Attempt #${i() + 1}` : "Resultant file:"}</p>
+                  <p>Bitrate: {round(attempt.bitrate)}Kb/s</p>
+                  <p>Size: {attempt.size}MB</p>
+                </li>
+              )}
+            </For>
+          </ul>
 
           <div class={styles.export__btns}>
             <button
               class={styles.export_btn}
+              disabled={renderData.renderer?.outputFilepath == null}
               onClick={async (e) => {
                 const button = e.currentTarget;
                 button.disabled = true;
@@ -94,7 +111,11 @@ export default function ExportOverlay() {
                 </button>
               }
             >
-              <button class={styles.export_btn}>Accept Current</button>
+              <Show when={hasMultipleAttempts()}>
+                <button class={styles.export_btn} onClick={() => renderData.renderer?.setUseCurrentAttempt((prev) => !prev)}>
+                  {!renderData.renderer?.useCurrentAttempt() ? "Accept Current" : "Auto Select"}
+                </button>
+              </Show>
               <button
                 class={styles.export_btn}
                 onClick={() => {
