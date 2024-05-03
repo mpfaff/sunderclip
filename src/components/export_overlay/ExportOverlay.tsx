@@ -34,101 +34,100 @@ export default function ExportOverlay() {
   const hasMultipleAttempts = () => (renderData.renderer?.maxAttempts ?? 0) > 1;
 
   return (
-    <Show when={renderData.rendering}>
-      <Overlay>
-        <div class={styles.export}>
-          <h2 class={styles.export__heading}>Exporting</h2>
-          <Show when={hasMultipleAttempts()}>
-            <p class={styles.export__attempt_text}>
-              Attempt {renderData.renderer?.currentAttempt() ?? ""}/{renderData.renderer?.maxAttempts || ""}
-            </p>
-          </Show>
-          <p>{stateMap.get(progress()?.state || RenderState.LOADING)}</p>
+    <Overlay>
+      <div class={styles.export}>
+        <h2 class={styles.export__heading}>Exporting</h2>
+        <Show when={hasMultipleAttempts()}>
+          <p class={styles.export__attempt_text}>
+            Attempt {renderData.renderer?.currentAttempt() ?? ""}/{renderData.renderer?.maxAttempts || ""}
+          </p>
+        </Show>
+        <p>{stateMap.get(progress()?.state || RenderState.LOADING)}</p>
 
-          <LoadingBar
-            name="Export progress"
-            fillColor="hsl(var(--clr-primary-400))"
-            max={100}
-            min={0}
-            value={() => round((progress()?.percentage || 0) * 100)}
-            done={() => progress()?.state === RenderState.FINISHED}
-          />
+        <LoadingBar
+          name="Export progress"
+          fillColor="hsl(var(--clr-primary-400))"
+          max={100}
+          min={0}
+          value={() => round((progress()?.percentage || 0) * 100)}
+          done={() => progress()?.state === RenderState.FINISHED}
+        />
 
-          <div class={styles.export__info}>
-            <p>ETA: {progress()?.eta == null ? "..." : timeToEta()}</p>
-            <Show when={progress()?.state === RenderState.ERRORED}>
-              <p>
-                Error: {progress()?.errorMsg?.slice(0, progress()?.errorMsg?.indexOf("\n"))}
-                <button
-                  onClick={async () => {
-                    const copyText = await confirm(progress()?.errorMsg!, {
-                      title: "Error Details",
-                      okLabel: "Copy",
-                      cancelLabel: "Close",
-                    });
-
-                    if (copyText) await writeText(progress()?.errorMsg!);
-                  }}
-                >
-                  View Full
-                </button>
-              </p>
-            </Show>
-          </div>
-          <hr />
-
-          <p>Previous attempts</p>
-          <ul class={styles.export__lastAttempts}>
-            <For each={renderData.renderer?.lastAttempts} fallback={<p>No attempts yet.</p>}>
-              {(attempt, i) => (
-                <li class={styles.export__lastAttemptItem}>
-                  <p>{hasMultipleAttempts() ? `Attempt #${i() + 1}` : "Resultant file:"}</p>
-                  <p>Bitrate: {round(attempt.bitrate)}Kb/s</p>
-                  <p>Size: {attempt.size}MB</p>
-                </li>
-              )}
-            </For>
-          </ul>
-
-          <div class={styles.export__btns}>
-            <button
-              class={styles.export_btn}
-              disabled={renderData.renderer?.outputFilepath == null}
-              onClick={async (e) => {
-                const button = e.currentTarget;
-                button.disabled = true;
-                await invoke<void>("show_in_folder", { path: renderData.renderer!.outputFilepath });
-                button.disabled = false;
-              }}
-            >
-              Open Folder
-            </button>
-            <Show
-              when={progress()?.state !== RenderState.FINISHED && progress()?.state !== RenderState.ERRORED}
-              fallback={
-                <button class={styles.export_btn} onClick={close}>
-                  {progress()?.state !== RenderState.ERRORED ? "Done" : "Close"}
-                </button>
-              }
-            >
-              <Show when={hasMultipleAttempts()}>
-                <button class={styles.export_btn} onClick={() => renderData.renderer?.setUseCurrentAttempt((prev) => !prev)}>
-                  {!renderData.renderer?.useCurrentAttempt() ? "Accept Current" : "Auto Select"}
-                </button>
-              </Show>
+        <div class={styles.export__info}>
+          <p>ETA: {progress()?.eta == null ? "..." : timeToEta()}</p>
+          <Show when={progress()?.state === RenderState.ERRORED}>
+            <p>
+              Error: {progress()?.errorMsg?.slice(0, progress()?.errorMsg?.indexOf("\n"))}
               <button
-                class={styles.export_btn}
-                onClick={() => {
-                  renderData.renderer?.cancelRender();
-                  close();
+                onClick={async () => {
+                  const copyText = await confirm(progress()?.errorMsg!, {
+                    title: "Error Details",
+                    okLabel: "Copy",
+                    cancelLabel: "Close",
+                  });
+
+                  if (copyText) await writeText(progress()?.errorMsg!);
                 }}
               >
-                Cancel
+                View Full
+              </button>
+            </p>
+          </Show>
+        </div>
+        <hr />
+
+        <p>Previous attempts</p>
+        <ul class={styles.export__lastAttempts}>
+          <For each={renderData.renderer?.lastAttempts} fallback={<p>No attempts yet.</p>}>
+            {(attempt, i) => (
+              <li class={styles.export__lastAttemptItem}>
+                <p>{hasMultipleAttempts() ? `Attempt #${i() + 1}` : "Resultant file:"}</p>
+                <p>Bitrate: {round(attempt.bitrate)}Kb/s</p>
+                <p>Size: {attempt.size}MB</p>
+              </li>
+            )}
+          </For>
+        </ul>
+
+        <div class={styles.export__btns}>
+          <button
+            class={styles.export_btn}
+            disabled={renderData.renderer?.outputFilepath == null}
+            onClick={async (e) => {
+              const button = e.currentTarget;
+
+              button.disabled = true;
+              await invoke<void>("show_in_folder", { path: renderData.renderer!.outputFilepath });
+              button.disabled = false;
+            }}
+          >
+            Open Folder
+          </button>
+          <Show
+            when={progress()?.state !== RenderState.FINISHED && progress()?.state !== RenderState.ERRORED}
+            fallback={
+              <button class={styles.export_btn} onClick={close}>
+                {progress()?.state !== RenderState.ERRORED ? "Done" : "Close"}
+              </button>
+            }
+          >
+            <Show when={hasMultipleAttempts()}>
+              <button class={styles.export_btn} onClick={() => renderData.renderer?.setUseCurrentAttempt((prev) => !prev)}>
+                {!renderData.renderer?.useCurrentAttempt() ? "Accept Current" : "Auto Select"}
               </button>
             </Show>
-          </div>
+            <button
+              class={styles.export_btn}
+              onClick={() => {
+                renderData.renderer?.cancelRender();
+                close();
+              }}
+            >
+              Cancel
+            </button>
+          </Show>
         </div>
-      </Overlay>
-    </Show>
+      </div>
+    </Overlay>
   );
 }

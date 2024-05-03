@@ -1,6 +1,7 @@
 .bar {
   position: relative;
   height: 1.5em;
+  min-height: 1.5em;
   width: 100%;
   border: 1px solid hsl(var(--clr-neutral-300));
   border-radius: 3px;

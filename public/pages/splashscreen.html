@@ -133,6 +133,11 @@
         }
       }
     </style>
+    <script>
+      window.addEventListener("load", () => {
+        window.__TAURI_INTERNALS__.invoke("plugin:window|show", { label: "splashscreen" });
+      });
+    </script>
   </head>
   <body>
     <div class="splashscreen">

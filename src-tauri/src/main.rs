@@ -21,7 +21,14 @@ use std::{
     fs::{create_dir, File},
     io::BufWriter,
     path::PathBuf,
-    sync::{Arc, OnceLock},
+    sync::{Arc, LazyLock, OnceLock},
+    time::Instant,
+};
+
+use tauri::{
+    http::{self, HeaderValue},
+    menu::{Menu, MenuEvent, MenuItem, Submenu},
+    App, Manager, Window, Wry,
 };
 
 static FFMPEG_HOME: OnceLock<PathBuf> = OnceLock::new();
@@ -29,11 +36,7 @@ static FFPROBE_PATH: OnceLock<PathBuf> = OnceLock::new();
 static FFMPEG_PATH: OnceLock<PathBuf> = OnceLock::new();
 static TEMP_PATH: OnceLock<PathBuf> = OnceLock::new();
 
-use tauri::{
-    http::{self, HeaderValue},
-    menu::{Menu, MenuEvent, MenuItem, Submenu},
-    App, Manager, Window, Wry,
-};
+static START_TIME: LazyLock<Instant> = LazyLock::new(|| Instant::now());
 
 mod commands;
 mod constants;

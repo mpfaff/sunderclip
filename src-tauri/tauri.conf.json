@@ -11,19 +11,12 @@
   "app": {
     "windows": [
       {
-        "title": "Sunderclip",
-        "label": "sunderclip",
-        "x": 0,
-        "y": -10000,
-        "visible": false,
-        "additionalBrowserArgs": "--autoplay-policy=no-user-gesture-required",
-        "dragDropEnabled": true
-      },
-      {
         "title": "Sunderclip launching",
         "label": "splashscreen",
         "decorations": false,
         "url": "/pages/splashscreen.html",
+        "additionalBrowserArgs": "--autoplay-policy=no-user-gesture-required",
+        "visible": false,
         "alwaysOnTop": true,
         "center": true,
         "resizable": false,
@@ -31,6 +24,15 @@
         "skipTaskbar": true,
         "width": 500,
         "height": 320
+      },
+      {
+        "title": "Sunderclip",
+        "label": "sunderclip",
+        "x": 0,
+        "y": -10000,
+        "visible": false,
+        "additionalBrowserArgs": "--autoplay-policy=no-user-gesture-required",
+        "dragDropEnabled": true
       }
     ],
     "security": {

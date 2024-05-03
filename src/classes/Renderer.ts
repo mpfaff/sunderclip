@@ -272,15 +272,15 @@ export default class Renderer {
   }
 
   async postRender() {
+    const file = await stat(this.settings.outputFilepath);
+
+    this.setLastAttempts(this.lastAttempts.length, {
+      bitrate: this.settings.targetBitrate,
+      size: round(file.size / 1e6),
+    });
+
     if (this.sizeLimit != null && !this.useCurrentAttempt()) {
       this.setProgress("state", RenderState.VALIDATING);
-
-      const file = await stat(this.settings.outputFilepath);
-
-      this.setLastAttempts(this.lastAttempts.length, {
-        bitrate: this.settings.targetBitrate,
-        size: round(file.size / 1e6),
-      });
 
       if (file.size <= this.sizeLimit.maxSize && file.size > this.bestAttempt.size) {
         this.bestAttempt.size = file.size;
