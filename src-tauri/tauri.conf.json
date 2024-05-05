@@ -17,7 +17,7 @@
         "url": "/pages/splashscreen.html",
         "additionalBrowserArgs": "--autoplay-policy=no-user-gesture-required",
         "visible": false,
-        "alwaysOnTop": true,
+
         "center": true,
         "resizable": false,
         "transparent": true,

@@ -1,4 +1,4 @@
-import { For, Show, createEffect, onCleanup, onMount } from "solid-js";
+import { For, Show, createEffect, onMount } from "solid-js";
 import { useAppContext } from "../../contexts/AppContext";
 import Panel from "../panel/Panel";
 
@@ -50,7 +50,8 @@ export default function Export() {
     audio: [],
   });
 
-  let formRef: HTMLFormElement;
+  let formRef!: HTMLFormElement;
+  let rateControlSelect!: HTMLSelectElement;
 
   createEffect(() => {
     // Set initial default values for new video
@@ -89,6 +90,23 @@ export default function Export() {
   createEffect(() => {
     // Sync default CRF value
     if (exportInfo.rateControl === "crf") setExportInfo("crfValue", VideoCodecs[exportInfo.videoCodec].crf?.default!);
+  });
+
+  createEffect(() => {
+    exportInfo.videoCodec; // Run on video codec change
+
+    // Auto select compatible rate control if current one is not compatible with new codec
+    if (rateControlSelect.options[rateControlSelect.selectedIndex].disabled) {
+      for (let i = 0; i < rateControlSelect.options.length; i++) {
+        const option = rateControlSelect.options[i];
+        if (!option.disabled) {
+          rateControlSelect.selectedIndex = i;
+          setExportInfo("rateControl", option.value as RateControlType);
+
+          break;
+        }
+      }
+    }
   });
 
   onMount(async () => {
@@ -222,6 +240,8 @@ export default function Export() {
                 type="number"
                 name="width"
                 id="width"
+                min="1"
+                disabled
                 value={exportInfo.width || ""}
                 required
                 onInput={(e) => setExportInfo("width", e.target.valueAsNumber)}
@@ -233,6 +253,8 @@ export default function Export() {
                 type="number"
                 name="height"
                 id="height"
+                min="1"
+                disabled
                 value={exportInfo.height || ""}
                 required
                 onInput={(e) => setExportInfo("height", e.target.valueAsNumber)}
@@ -240,7 +262,7 @@ export default function Export() {
             </div>
             <div class={styles.export__inputGroup} style={{ "grid-area": "lock" }}>
               <label for="lock-aspect">Lock Ratio</label>
-              <input type="checkbox" name="lock-aspect" id="lock-aspect" checked onInput={(e) => setExportInfo("lockRatio", e.target.checked)} />
+              <input type="checkbox" name="lock-aspect" id="lock-aspect" checked disabled onInput={(e) => setExportInfo("lockRatio", e.target.checked)} />
             </div>
             <div class={styles.export__inputGroup} style={{ "grid-area": "fps" }}>
               <label for="fps">Frame Rate</label>
@@ -248,6 +270,7 @@ export default function Export() {
                 type="number"
                 name="fps"
                 id="fps"
+                disabled
                 value={exportInfo.fps || ""}
                 required
                 onInput={(e) => setExportInfo("fps", e.target.valueAsNumber)}
@@ -303,10 +326,15 @@ export default function Export() {
           </div>
         </fieldset>
         <fieldset class={styles.export__fieldset}>
-          <div class={`${styles.export__group} ${styles}`}>
+          <div class={`${styles.export__group}`}>
             <div class={styles.export__inputGroup}>
               <label for="rate-control">Rate control</label>
-              <select name="rate-control" id="rate-control" onInput={(e) => setExportInfo("rateControl", e.target.value as RateControlType)}>
+              <select
+                name="rate-control"
+                id="rate-control"
+                ref={(ref) => (rateControlSelect = ref)}
+                onInput={(e) => setExportInfo("rateControl", e.target.value as RateControlType)}
+              >
                 <option value="cbr" disabled={VideoCodecs[exportInfo.videoCodec].rateControl["cbr"] == null}>
                   CBR (constant bitrate)
                 </option>
@@ -330,6 +358,7 @@ export default function Export() {
                   type="number"
                   name="target-bitrate"
                   id="target-bitrate"
+                  min="0.1"
                   value={mediaData() != null ? round((mediaData()!.size * 8) / mediaData()!.duration / 1000, 0) : ""}
                   onInput={(e) => setExportInfo("targetBitrate", e.target.valueAsNumber)}
                   required
@@ -344,6 +373,7 @@ export default function Export() {
                   type="number"
                   name="min-bitrate"
                   id="min-bitrate"
+                  min="0.1"
                   onInput={(e) => setExportInfo("minBitrate", e.target.valueAsNumber)}
                   required
                   disabled={exportInfo.limitSize}
@@ -355,6 +385,7 @@ export default function Export() {
                   type="number"
                   name="max-bitrate"
                   id="max-bitrate"
+                  min="0.1"
                   onInput={(e) => setExportInfo("maxBitrate", e.target.valueAsNumber)}
                   required
                   disabled={exportInfo.limitSize}
@@ -421,6 +452,7 @@ export default function Export() {
                 type="number"
                 name="max-size"
                 id="max-size"
+                min="0.01"
                 required
                 onInput={(e) => setExportInfo("sizeLimitDetails", "maxSize", e.target.valueAsNumber)}
               />
@@ -432,6 +464,8 @@ export default function Export() {
                 name="max-attempts"
                 id="max-attempts"
                 value={exportInfo.sizeLimitDetails.maxAttempts}
+                min="2"
+                step="1"
                 required
                 onInput={(e) => setExportInfo("sizeLimitDetails", "maxAttempts", e.target.valueAsNumber)}
               />

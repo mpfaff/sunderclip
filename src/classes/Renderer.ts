@@ -112,6 +112,7 @@ export default class Renderer {
 
     if (sizeLimit != null) {
       const duration = settings.trimEnd - settings.trimStart;
+      // TODO: subtract audio bitrate from calculations
       const theoreticalConstantBitrateKbps = ((sizeLimit.maxSize * 8) / duration) * 1000;
 
       settings.targetBitrate = theoreticalConstantBitrateKbps;
@@ -235,12 +236,12 @@ export default class Renderer {
       if (this.memory.maxSetBitrate !== Infinity && this.memory.minSetBitrate !== 0) {
         this.settings.targetBitrate = minmax(
           this.memory.minSetBitrate,
-          this.settings.targetBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier,
+          this.settings.targetBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff,
           this.memory.maxSetBitrate
         );
         this.settings.maxBitrate = minmax(
           this.memory.minSetBitrate,
-          this.settings.maxBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff * multiplier,
+          this.settings.maxBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff,
           this.memory.maxSetBitrate
         );
       } else {
@@ -282,14 +283,14 @@ export default class Renderer {
     if (this.sizeLimit != null && !this.useCurrentAttempt()) {
       this.setProgress("state", RenderState.VALIDATING);
 
-      if (file.size <= this.sizeLimit.maxSize && file.size > this.bestAttempt.size) {
+      if (file.size <= this.sizeLimit.maxSize * 1e6 && file.size > this.bestAttempt.size) {
         this.bestAttempt.size = file.size;
         this.bestAttempt.targetBitrate = this.settings.targetBitrate;
         this.bestAttempt.maxBitrate = this.settings.maxBitrate;
         this.bestAttempt.minBitrate = this.settings.minBitrate;
       }
 
-      const adjusted = this.adjustSettings(file.size, this.currentAttempt() == this.maxAttempts);
+      const adjusted = this.adjustSettings(file.size, this.currentAttempt() == this.maxAttempts - 1);
 
       if (adjusted && this.currentAttempt() < this.sizeLimit.maxAttempts) {
         await remove(this.settings.outputFilepath);

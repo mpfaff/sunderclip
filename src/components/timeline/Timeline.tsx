@@ -85,7 +85,8 @@ export default function Timeline() {
   function handleTrimheadDown(event: PointerEvent) {
     const trimStart = (event.target as HTMLDivElement).id === "trimhead-start";
     setTrimDragging(trimStart ? "start" : "end", true);
-    if (!playing()) setTrimStartTime(videoElement()!.currentTime);
+    setTrimStartTime(videoElement()!.currentTime);
+    video.pause();
     handleTrimheadMove(event);
   }
 
@@ -156,14 +157,18 @@ export default function Timeline() {
     const { percentage } = getSliderLocation(properties, trimStart ? 0 : trimPos.start, !trimStart ? 1 : trimPos.end);
 
     const time = percentage * videoElement()!.duration;
-    if (trimStartTime() != null) updateVideoTime(time, false);
+    if (trimStartTime() != null) {
+      video.pause();
+      updateVideoTime(time, false);
+    }
     setTrim(trimheadName, time);
     setTrimPos(trimheadName, percentage);
   }
 
   createEffect(() => {
-    // Sync cursor position to video player time
-    if (dragging()) return;
+    // Sync cursor position to video player time, do not sync if
+    // the cursor or any trimhead is being dragged
+    if (dragging() || trimDragging.any) return;
 
     const time = currentTime();
     const duration = videoElement()!.duration;
