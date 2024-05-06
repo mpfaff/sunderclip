@@ -97,7 +97,9 @@ export default function ExportOverlay() {
               const button = e.currentTarget;
 
               button.disabled = true;
-              await invoke<void>("show_in_folder", { path: renderData.renderer!.outputFilepath });
+              try {
+                await invoke<void>("show_in_folder", { path: renderData.renderer!.outputFilepath });
+              } catch {} // TODO: inform user of failure, however this should be a rare error
               button.disabled = false;
             }}
           >
