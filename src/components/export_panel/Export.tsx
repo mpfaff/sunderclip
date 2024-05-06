@@ -359,6 +359,7 @@ export default function Export() {
                   name="target-bitrate"
                   id="target-bitrate"
                   min="0.1"
+                  step="0.0001"
                   value={mediaData() != null ? round((mediaData()!.size * 8) / mediaData()!.duration / 1000, 0) : ""}
                   onInput={(e) => setExportInfo("targetBitrate", e.target.valueAsNumber)}
                   required
@@ -374,6 +375,7 @@ export default function Export() {
                   name="min-bitrate"
                   id="min-bitrate"
                   min="0.1"
+                  step="0.0001"
                   onInput={(e) => setExportInfo("minBitrate", e.target.valueAsNumber)}
                   required
                   disabled={exportInfo.limitSize}
@@ -386,6 +388,7 @@ export default function Export() {
                   name="max-bitrate"
                   id="max-bitrate"
                   min="0.1"
+                  step="0.0001"
                   onInput={(e) => setExportInfo("maxBitrate", e.target.valueAsNumber)}
                   required
                   disabled={exportInfo.limitSize}
@@ -453,6 +456,7 @@ export default function Export() {
                 name="max-size"
                 id="max-size"
                 min="0.01"
+                step="0.01"
                 required
                 onInput={(e) => setExportInfo("sizeLimitDetails", "maxSize", e.target.valueAsNumber)}
               />
@@ -478,7 +482,7 @@ export default function Export() {
                 id="retry-threshold"
                 value={exportInfo.sizeLimitDetails.retryThreshold}
                 required
-                min="0"
+                min="0.01"
                 max="1"
                 step="0.01"
                 onInput={(e) => setExportInfo("sizeLimitDetails", "retryThreshold", e.target.valueAsNumber)}
