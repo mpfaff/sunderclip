@@ -21,7 +21,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 export default function MediaInfo() {
-  const [{ videoFile, mediaData }, { setMediaData }] = useAppContext();
+  const [{ videoFile, mediaData }, { setMediaData }, { resetProject }] = useAppContext();
 
   createEffect(async () => {
     const file = videoFile();
@@ -37,7 +37,14 @@ export default function MediaInfo() {
     try {
       const json = JSON.parse(rawData) as FfprobeOutput;
 
-      const videoStream = json.streams.find((stream) => stream.codec_type === "video")! as FfprobeVideoStream;
+      const videoStream = json.streams.find((stream) => stream.codec_type === "video") as FfprobeVideoStream | undefined;
+
+      if (videoStream == null) {
+        alert(`Please input a file with video. The current file (${json.format.filename}) does not have a video track.`);
+        resetProject();
+
+        return;
+      }
 
       const fpsFraction = videoStream.avg_frame_rate.split("/");
       const aspectRatioGcd = gcd(videoStream.width, videoStream.height);

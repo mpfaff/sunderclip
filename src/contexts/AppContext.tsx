@@ -17,11 +17,12 @@ function createAppContext() {
   });
 
   async function render(settings: RenderInfo, sizeLimit: RenderSizeLimit | null) {}
+  function resetProject() {}
 
   return [
     { videoElement, videoFile, mediaData, renderData, trim },
     { setVideoElement, setVideoFile, setMediaData, setTrim, setRenderData },
-    { render },
+    { render, resetProject },
   ] as const;
 }
 type AppContextType = ReturnType<typeof createAppContext>;
@@ -50,7 +51,7 @@ export default function AppProvider(props: AppProvider) {
     renderer: null,
   });
 
-  function newProject() {
+  function resetProject() {
     // TODO: implement actual new project dialog
     setVideoFile(null);
     setMediaData(null);
@@ -120,7 +121,7 @@ export default function AppProvider(props: AppProvider) {
 
   onMount(async () => {
     await Menubar.init();
-    Menubar.addEventListener("new_proj", newProject);
+    Menubar.addEventListener("new_proj", resetProject);
     Menubar.addEventListener("prefs", openPreferences);
     Menubar.addEventListener("zoom_in", zoomIn);
     Menubar.addEventListener("zoom_out", zoomOut);
@@ -137,7 +138,11 @@ export default function AppProvider(props: AppProvider) {
 
   return (
     <AppContext.Provider
-      value={[{ videoElement, videoFile, mediaData, renderData, trim }, { setVideoElement, setVideoFile, setMediaData, setRenderData, setTrim }, { render }]}
+      value={[
+        { videoElement, videoFile, mediaData, renderData, trim },
+        { setVideoElement, setVideoFile, setMediaData, setRenderData, setTrim },
+        { render, resetProject },
+      ]}
     >
       {props.children}
     </AppContext.Provider>
