@@ -82,7 +82,9 @@ export default function ExportOverlay() {
             {(attempt, i) => (
               <li class={styles.export__lastAttemptItem}>
                 <p>{hasMultipleAttempts() ? `Attempt #${i() + 1}` : "Resultant file:"}</p>
-                <p>Bitrate: {round(attempt.bitrate)}Kb/s</p>
+                <Show when={attempt.bitrate != null}>
+                  <p>Bitrate: {round(attempt.bitrate!)}Kb/s</p>
+                </Show>
                 <p>Size: {attempt.size}MB</p>
               </li>
             )}

@@ -27,7 +27,7 @@ type ProgressStore = {
 };
 
 type Attempt = {
-  bitrate: number;
+  bitrate: number | null;
   size: number;
 };
 
@@ -50,16 +50,25 @@ export default class Renderer {
   readonly lastAttempts: Attempts;
   private setLastAttempts: SetStoreFunction<Attempts>;
 
-  private bestAttempt = {
+  private bestAttempt: {
+    size: number; // Bytes
+    minBitrate: number | null;
+    targetBitrate: number | null;
+    maxBitrate: number;
+  } = {
     size: 0,
-    minBitrate: 0.1,
-    targetBitrate: 0.1,
+    minBitrate: null,
+    targetBitrate: null,
     maxBitrate: Infinity,
   };
-  private lastPercentDiff = 0.1;
-  private memory = {
+  private memory: {
+    lastPercentDiff: number;
+    maxSetBitrate: number;
+    minSetBitrate: number | null;
+  } = {
+    lastPercentDiff: 0.1,
     maxSetBitrate: Infinity,
-    minSetBitrate: 0.1,
+    minSetBitrate: null,
   };
 
   private currentRenderId: number | undefined;
@@ -215,25 +224,25 @@ export default class Renderer {
     }
   }
 
-  private adjustSettings(resultantSize: number, finalAttempt: boolean) {
+  private adjustSettings(resultantSize: number, finalAttempt: boolean): boolean {
     console.log(resultantSize / 1e6);
 
-    const maxSizeBytes = this.sizeLimit!.maxSize * 1e6;
+    const targetSizeBytes = this.sizeLimit!.maxSize * 1e6;
     // > 0 : over size limit
     // < 0 : under size limit
-    const percentDiff = resultantSize / maxSizeBytes - 1;
+    const percentDiff = resultantSize / targetSizeBytes - 1;
 
     if (percentDiff <= 0 && -percentDiff < this.sizeLimit!.retryThreshold) return false;
 
-    if (resultantSize > maxSizeBytes) {
+    if (resultantSize > targetSizeBytes) {
       this.memory.maxSetBitrate = Math.min(this.memory.maxSetBitrate, this.settings.maxBitrate);
     }
-    if (resultantSize < maxSizeBytes) this.memory.minSetBitrate = this.settings.targetBitrate;
+    if (resultantSize < targetSizeBytes) this.memory.minSetBitrate = this.settings.targetBitrate;
 
-    const multiplier = Math.sqrt(69 * Math.abs(Math.abs(this.lastPercentDiff) - Math.abs(percentDiff))) + 1;
+    const multiplier = Math.sqrt(69 * Math.abs(Math.abs(this.memory.lastPercentDiff) - Math.abs(percentDiff))) + 1;
 
     if (!finalAttempt) {
-      if (this.memory.maxSetBitrate !== Infinity && this.memory.minSetBitrate !== 0) {
+      if (this.memory.maxSetBitrate !== Infinity && this.memory.minSetBitrate !== null) {
         this.settings.targetBitrate = minmax(
           this.memory.minSetBitrate,
           this.settings.targetBitrate - (this.memory.maxSetBitrate - this.memory.minSetBitrate) * percentDiff,
@@ -246,21 +255,21 @@ export default class Renderer {
         );
       } else {
         this.settings.targetBitrate = minmax(
-          this.memory.minSetBitrate,
+          this.memory.minSetBitrate || 0.01,
           this.settings.targetBitrate - this.settings.targetBitrate * percentDiff * multiplier,
           this.memory.maxSetBitrate
         );
         this.settings.maxBitrate = minmax(
-          this.memory.minSetBitrate,
+          this.memory.minSetBitrate || 0.01,
           this.settings.maxBitrate - this.settings.maxBitrate * percentDiff * multiplier,
           this.memory.maxSetBitrate
         );
       }
-      this.lastPercentDiff = percentDiff;
+      this.memory.lastPercentDiff = percentDiff;
     } else {
       this.settings.maxBitrate = this.bestAttempt.maxBitrate;
-      this.settings.targetBitrate = this.bestAttempt.targetBitrate;
-      this.settings.minBitrate = this.bestAttempt.minBitrate;
+      this.settings.targetBitrate = this.bestAttempt.targetBitrate!;
+      this.settings.minBitrate = this.bestAttempt.minBitrate!;
     }
 
     this.settings.codecRateControl = Renderer.generateRateControlCmd(this.settings);
@@ -283,7 +292,13 @@ export default class Renderer {
     if (this.sizeLimit != null && !this.useCurrentAttempt()) {
       this.setProgress("state", RenderState.VALIDATING);
 
-      if (file.size <= this.sizeLimit.maxSize * 1e6 && file.size > this.bestAttempt.size) {
+      const maxSizeBytes = this.sizeLimit.maxSize * 1e6;
+
+      if (
+        this.bestAttempt.targetBitrate == null ||
+        (file.size <= maxSizeBytes && this.settings.targetBitrate > this.bestAttempt.targetBitrate) ||
+        (file.size >= maxSizeBytes && file.size < this.bestAttempt.size)
+      ) {
         this.bestAttempt.size = file.size;
         this.bestAttempt.targetBitrate = this.settings.targetBitrate;
         this.bestAttempt.maxBitrate = this.settings.maxBitrate;
