@@ -239,7 +239,7 @@ export default class Renderer {
     }
     if (resultantSize < targetSizeBytes) this.memory.minSetBitrate = this.settings.targetBitrate;
 
-    const multiplier = Math.sqrt(69 * Math.abs(Math.abs(this.memory.lastPercentDiff) - Math.abs(percentDiff))) + 1;
+    const multiplier = Math.sqrt(42 * Math.abs(Math.abs(this.memory.lastPercentDiff) - Math.abs(percentDiff))) + 1;
 
     if (!finalAttempt) {
       if (this.memory.maxSetBitrate !== Infinity && this.memory.minSetBitrate !== null) {
@@ -296,7 +296,7 @@ export default class Renderer {
 
       if (
         this.bestAttempt.targetBitrate == null ||
-        (file.size <= maxSizeBytes && this.settings.targetBitrate > this.bestAttempt.targetBitrate) ||
+        (file.size <= maxSizeBytes && (this.settings.targetBitrate > this.bestAttempt.targetBitrate || this.bestAttempt.size > maxSizeBytes)) ||
         (file.size >= maxSizeBytes && file.size < this.bestAttempt.size)
       ) {
         this.bestAttempt.size = file.size;
