@@ -57,27 +57,30 @@ export default function Export() {
     // Set initial default values for new video
 
     if (mediaData() == null) return;
-    const { width, height, fps, filename, streams } = mediaData()!;
+    const { width, height, fps, filename, streams, size, duration } = mediaData()!;
 
     setExportInfo("width", width);
     setExportInfo("height", height);
     setExportInfo("fps", fps);
     setExportInfo("filename", filename);
+    setExportInfo("targetBitrate", round((size * 8) / duration / 1000, 0));
     setExportInfo(
       "mergeAudioTracks",
       streams.filter((stream) => stream.codec_type === "audio").map((stream) => stream.index)
     );
   });
 
+  async function updateAbsolutePath(filepath: string | null, filename: string | null, fileExt: string | null) {
+    if (filepath == null || filename == null || fileExt == null) return;
+    setExportInfo("absolutePath", (await path.join(filepath, filename || "")) + `.${fileExt}`);
+  }
   createEffect(async () => {
     // Sync absolute path with other properties
-
     const filepath = exportInfo.filepath;
     const fileExt = exportInfo.fileExt;
     const filename = exportInfo.filename;
-    if (filepath == null || filename == null || fileExt == null) return;
 
-    setExportInfo("absolutePath", (await path.join(filepath, filename || "")) + `.${fileExt}`);
+    await updateAbsolutePath(filepath, filename, fileExt);
   });
 
   createEffect(() => {
@@ -135,6 +138,15 @@ export default function Export() {
 
   async function beginRender() {
     if (!formRef.reportValidity()) return;
+    // Custom check for location
+    if (exportInfo.filepath == null) {
+      const savePath = await open({ directory: true });
+      if (savePath == null) return;
+
+      setExportInfo("filepath", savePath);
+      localStorage.setItem("export_filepath", savePath);
+      await updateAbsolutePath(exportInfo.filepath!, exportInfo.filename, exportInfo.fileExt);
+    }
 
     const settings: RenderInfo = {
       aCodecId: exportInfo.audioCodecId,
@@ -162,11 +174,9 @@ export default function Export() {
         okLabel: "Replace",
       });
 
-      if (!overridePrompt) {
-        return;
-      } else {
-        settings.overrideFile = true;
-      }
+      if (!overridePrompt) return;
+
+      settings.overrideFile = true;
     }
 
     render(
@@ -198,7 +208,6 @@ export default function Export() {
                 type="button"
                 name="location"
                 id="location"
-                required
                 value={exportInfo.filepath != null ? "Change" : "Select folder"}
                 style={{ width: "unset", "flex-grow": 1 }}
                 onClick={async () => {
@@ -233,6 +242,7 @@ export default function Export() {
           </p>
         </fieldset>
         <fieldset class={styles.export__fieldset}>
+          <span style={{ color: "white", "text-align": "center" }}>Video resizing to come...</span>
           <div class={`${styles.export__group} ${styles.export__video}`}>
             <div class={styles.export__inputGroup} style={{ "grid-area": "x-res" }}>
               <label for="resolution">Width</label>
@@ -360,7 +370,7 @@ export default function Export() {
                   id="target-bitrate"
                   min="0.1"
                   step="0.0001"
-                  value={mediaData() != null ? round((mediaData()!.size * 8) / mediaData()!.duration / 1000, 0) : ""}
+                  value={exportInfo.targetBitrate != null ? exportInfo.targetBitrate : ""}
                   onInput={(e) => setExportInfo("targetBitrate", e.target.valueAsNumber)}
                   required
                   disabled={exportInfo.limitSize}

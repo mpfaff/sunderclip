@@ -33,12 +33,6 @@
   gap: 0.3em;
 }
 
-.export__folder_text {
-  flex-grow: 1;
-  font-size: 0.8rem;
-  color: hsl(var(--clr-neutral-700));
-}
-
 .export__video {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -104,6 +98,12 @@
 
 .export__inputRow input {
   margin-bottom: 0;
+}
+
+.export__folder_text {
+  flex-grow: 1;
+  font-size: 0.8rem;
+  color: hsl(var(--clr-neutral-700));
 }
 
 .export__location_text {

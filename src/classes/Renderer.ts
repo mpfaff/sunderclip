@@ -267,9 +267,9 @@ export default class Renderer {
       }
       this.memory.lastPercentDiff = percentDiff;
     } else {
-      this.settings.maxBitrate = this.bestAttempt.maxBitrate;
+      this.settings.maxBitrate = this.bestAttempt.maxBitrate == Infinity ? this.bestAttempt.targetBitrate! : this.bestAttempt.maxBitrate;
       this.settings.targetBitrate = this.bestAttempt.targetBitrate!;
-      this.settings.minBitrate = this.bestAttempt.minBitrate!;
+      this.settings.minBitrate = this.bestAttempt.minBitrate || 0.01;
     }
 
     this.settings.codecRateControl = Renderer.generateRateControlCmd(this.settings);
