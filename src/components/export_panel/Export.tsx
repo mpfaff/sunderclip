@@ -234,6 +234,7 @@ export default function Export() {
               />
               <span>.{exportInfo.fileExt}</span>
             </div>
+            <span>Do not enter invalid filename characters, as filtering is not supported yet.</span>{" "}
           </div>
 
           <p class={styles.export__location_text}>
@@ -456,6 +457,7 @@ export default function Export() {
             <label for="limit-size">Limit Size?</label>
             <input type="checkbox" name="limit-size" id="limit-size" style={{ margin: "0" }} onInput={(e) => setExportInfo("limitSize", e.target.checked)} />
           </div>
+          <span>This will attempt to export the video at the highest bitrate within the size limit.</span>
         </div>
         <fieldset class={styles.export__fieldset} disabled={!exportInfo.limitSize}>
           <div class={`${styles.export__group} ${styles.export__max_size}`}>
@@ -478,7 +480,7 @@ export default function Export() {
                 name="max-attempts"
                 id="max-attempts"
                 value={exportInfo.sizeLimitDetails.maxAttempts}
-                min="2"
+                min="1"
                 step="1"
                 required
                 onInput={(e) => setExportInfo("sizeLimitDetails", "maxAttempts", e.target.valueAsNumber)}
