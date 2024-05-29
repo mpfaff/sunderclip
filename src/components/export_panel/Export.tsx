@@ -42,7 +42,7 @@ export default function Export() {
     maxBitrate: null,
     mergeAudioTracks: [],
     rateControl: "cbr",
-    sizeLimitDetails: { maxAttempts: 3, maxSize: 0, retryThreshold: 0.1 },
+    sizeLimitDetails: { maxAttempts: 5, maxSize: 0, retryThreshold: 0.1 },
   });
 
   const [supportedCodecs, setSupportedCodecs] = createStore<{ video: Codec<VideoCodec>[]; audio: Codec<AudioCodec>[] }>({
