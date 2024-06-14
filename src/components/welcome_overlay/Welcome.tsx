@@ -28,7 +28,7 @@ export default function Welcome() {
 
       setHovering(true);
 
-      if (event.payload.paths.length > 1 || !VIDEO_FILE_EXTENSIONS.has(file.split(".").pop()!)) return setHoveringValid(false);
+      if (event.payload.paths.length > 1 || !VIDEO_FILE_EXTENSIONS.has(file.split(".").pop()?.toLowerCase() || "")) return setHoveringValid(false);
       setHoveringValid(true);
     });
 
@@ -40,7 +40,7 @@ export default function Welcome() {
       const file = event.payload.paths[0];
       if (file == null) return;
 
-      if (event.payload.paths.length > 1 || !VIDEO_FILE_EXTENSIONS.has(file.split(".").pop()!)) return setHoveringValid(false);
+      if (event.payload.paths.length > 1 || !VIDEO_FILE_EXTENSIONS.has(file.split(".").pop()?.toLowerCase() || "")) return setHoveringValid(false);
       setHoveringValid(true);
 
       setVideoFile(file);
