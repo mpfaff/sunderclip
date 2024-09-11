@@ -2,8 +2,8 @@ name: "publish"
 
 on:
   push:
-    branches:
-      - release
+    tags:
+      - '*'
   workflow_dispatch:
 
 # This is the example from the readme.
