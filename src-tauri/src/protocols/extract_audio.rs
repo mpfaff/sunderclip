@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use tauri::http::{self, HeaderValue};
 use tokio::{io::AsyncReadExt as _, process::Command};
 
-use crate::{constants::CREATE_NO_WINDOW, FFMPEG_PATH};
+use crate::FFMPEG_PATH;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ExtractAudioParams {
@@ -113,7 +113,8 @@ pub async fn extract_audio_protocol(
 
     let mut data: Vec<u8> = Vec::new();
 
-    let command = Command::new(FFMPEG_PATH.get().unwrap())
+    let mut command = Command::new(FFMPEG_PATH.get().unwrap());
+    command
         .args([
             "-i",
             &video_source,
@@ -124,13 +125,16 @@ pub async fn extract_audio_protocol(
             "-f",
             "mp3",
         ])
-        .arg(&"pipe:2")
-        .creation_flags(CREATE_NO_WINDOW)
+        .arg(&"pipe:2");
+    #[cfg(target_os = "windows")]
+    command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
+
+    let child = command
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| e.to_string())?;
 
-    command
+    child
         .stderr
         .unwrap()
         .read_to_end(&mut data)

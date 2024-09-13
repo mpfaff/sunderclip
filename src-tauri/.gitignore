@@ -2,6 +2,9 @@
 # will have compiled files and executables
 /target/
 
+# Tauri generated files
+/gen/
+
 # Original uncompressed ffmpeg binaries
 /src/ffmpeg/windows/ffmpeg.exe
 /src/ffmpeg/windows/ffprobe.exe

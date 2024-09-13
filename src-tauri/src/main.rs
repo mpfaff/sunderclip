@@ -1,6 +1,5 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![feature(lazy_cell)]
 
 #[cfg(target_os = "windows")]
 const FFMPEG_BIN: &'static [u8] = include_bytes!("ffmpeg/windows/ffmpeg.exe.zst");
@@ -8,12 +7,12 @@ const FFMPEG_BIN: &'static [u8] = include_bytes!("ffmpeg/windows/ffmpeg.exe.zst"
 const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/windows/ffprobe.exe.zst");
 
 #[cfg(target_os = "macos")]
-const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/macos/ffmpeg.zst");
+const FFMPEG_BIN: &'static [u8] = include_bytes!("ffmpeg/macos/ffmpeg.zst");
 #[cfg(target_os = "macos")]
 const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/macos/ffprobe.zst");
 
 #[cfg(target_os = "linux")]
-const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/linux/ffmpeg.zst");
+const FFMPEG_BIN: &'static [u8] = include_bytes!("ffmpeg/linux/ffmpeg.zst");
 #[cfg(target_os = "linux")]
 const FFPROBE_BIN: &'static [u8] = include_bytes!("ffmpeg/linux/ffprobe.zst");
 
@@ -21,8 +20,7 @@ use std::{
     fs::{create_dir, File},
     io::BufWriter,
     path::PathBuf,
-    sync::{Arc, LazyLock, OnceLock},
-    time::Instant,
+    sync::{Arc, OnceLock},
 };
 
 use tauri::{
@@ -36,10 +34,7 @@ static FFPROBE_PATH: OnceLock<PathBuf> = OnceLock::new();
 static FFMPEG_PATH: OnceLock<PathBuf> = OnceLock::new();
 static TEMP_PATH: OnceLock<PathBuf> = OnceLock::new();
 
-static START_TIME: LazyLock<Instant> = LazyLock::new(|| Instant::now());
-
 mod commands;
-mod constants;
 mod protocols;
 
 fn get_app_temp_data_dir(app: &App) -> PathBuf {

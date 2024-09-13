@@ -5,20 +5,24 @@ use tokio::{
     process::Command,
 };
 
-use crate::{constants::CREATE_NO_WINDOW, FFMPEG_PATH};
+use crate::FFMPEG_PATH;
 
 #[tauri::command]
 pub async fn get_encoders() -> Result<Vec<String>, String> {
     let mut encoders = Vec::new();
 
-    let command = Command::new(FFMPEG_PATH.get().unwrap())
+    let mut command = Command::new(FFMPEG_PATH.get().unwrap());
+    command
         .args(["-hide_banner", "-encoders"])
-        .creation_flags(CREATE_NO_WINDOW)
-        .stdout(Stdio::piped())
+        .stdout(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
+    let child = command
         .spawn()
         .map_err(|e| e.to_string())?;
 
-    let mut reader = BufReader::new(command.stdout.unwrap());
+    let mut reader = BufReader::new(child.stdout.unwrap());
     let mut line_buf = Vec::new();
 
     while reader

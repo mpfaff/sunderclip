@@ -32,3 +32,9 @@ The idea of Sunderclip came about from my personal experiences of having to cons
 If you also have encountered similar issues, I hope this app helps you!
 
 Fun fact: this project will serve as my final project for computer science.
+
+## Building
+
+1. Make sure you have the latest beta of tauri-cli installed
+2. Run `tauri build` to build in release mode or `tauri dev` to run a dev build
+

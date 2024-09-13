@@ -11,7 +11,7 @@ use tokio::{
     sync::Mutex,
 };
 
-use crate::{constants::CREATE_NO_WINDOW, FFMPEG_PATH};
+use crate::FFMPEG_PATH;
 
 struct RenderTask {
     canceller: tokio::sync::oneshot::Sender<()>,
@@ -85,6 +85,11 @@ pub async fn start_render(
 
     command.arg(output_filepath);
 
+    #[cfg(target_os = "windows")]
+    command.creation_flags(windows_sys::Win32::System::Threading::CREATE_NO_WINDOW);
+    command.stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
     let id = NEXT_RENDER_TASK.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let (canceller, mut rx) = tokio::sync::oneshot::channel();
     {
@@ -97,9 +102,6 @@ pub async fn start_render(
             let mut lines = String::new();
 
             let mut child = command
-                .creation_flags(CREATE_NO_WINDOW)
-                .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
                 .spawn()
                 .map_err(|e| e.to_string())?;
 
